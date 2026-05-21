@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading System Calculator — Lot Size, Net RR & Fibonacci Entry Signal (Fixed)</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --input-bg: #0d1117;
+            --input-border: #30363d;
+            --input-focus: #58a6ff;
+            --accent-lot: #58a6ff;
+            --accent-lot-soft: rgba(88, 166, 255, 0.08);
+            --accent-lot-glow: rgba(88, 166, 255, 0.25);
+            --accent-rr: #f78166;
+            --accent-rr-soft: rgba(247, 129, 102, 0.08);
+            --accent-rr-glow: rgba(247, 129, 102, 0.25);
+            --accent-fib: #bc8cff;
+            --accent-fib-soft: rgba(188, 140, 255, 0.08);
+            --accent-fib-glow: rgba(188, 140, 255, 0.25);
+            --green: #3fb950;
+            --green-soft: rgba(63, 185, 80, 0.10);
+            --red: #f85149;
+            --red-soft: rgba(248, 81, 73, 0.08);
+            --orange: #d2991d;
+            --orange-soft: rgba(210, 153, 29, 0.10);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: 0.2s ease;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Menlo', monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: radial-gradient(ellipse at 20% 20%, rgba(88, 166, 255, 0.03) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 70%, rgba(247, 129, 102, 0.03) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, rgba(188, 140, 255, 0.02) 0%, transparent 60%);
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 8px 0 4px;
+        }
+
+        .header .logo-icon {
+            font-size: 2.4rem;
+            display: block;
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .header h1 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .sections-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        @media (max-width: 720px) {
+            .sections-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .header h1 {
+                font-size: 1.35rem;
+            }
+
+            body {
+                padding: 12px;
+            }
+
+            .main-container {
+                gap: 14px;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 22px 20px 18px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .card-lot {
+            border-top: 3px solid var(--accent-lot);
+        }
+
+        .card-lot:hover {
+            border-color: #6db9ff;
+            box-shadow: 0 0 28px var(--accent-lot-glow), 0 0 0 1px rgba(88, 166, 255, 0.15) inset;
+        }
+
+        .card-rr {
+            border-top: 3px solid var(--accent-rr);
+        }
+
+        .card-rr:hover {
+            border-color: #f9987e;
+            box-shadow: 0 0 28px var(--accent-rr-glow), 0 0 0 1px rgba(247, 129, 102, 0.15) inset;
+        }
+
+        .card-fib {
+            border-top: 3px solid var(--accent-fib);
+            margin-top: 2px;
+        }
+
+        .card-fib:hover {
+            border-color: #d0b0ff;
+            box-shadow: 0 0 28px var(--accent-fib-glow), 0 0 0 1px rgba(188, 140, 255, 0.15) inset;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .card-lot .card-icon {
+            background: var(--accent-lot-soft);
+            color: var(--accent-lot);
+        }
+
+        .card-rr .card-icon {
+            background: var(--accent-rr-soft);
+            color: var(--accent-rr);
+        }
+
+        .card-fib .card-icon {
+            background: var(--accent-fib-soft);
+            color: var(--accent-fib);
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.2px;
+            line-height: 1.2;
+        }
+
+        .card-title small {
+            display: block;
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 13px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            gap: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            transition: all var(--transition);
+            outline: none;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+            background: #111820;
+        }
+
+        .card-rr .input-wrapper input:focus {
+            border-color: var(--accent-rr);
+            box-shadow: 0 0 0 3px rgba(247, 129, 102, 0.1);
+        }
+
+        .card-fib .input-wrapper input:focus {
+            border-color: var(--accent-fib);
+            box-shadow: 0 0 0 3px rgba(188, 140, 255, 0.1);
+        }
+
+        .input-suffix {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            pointer-events: none;
+            font-family: var(--font-sans);
+        }
+
+        .sync-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            cursor: default;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .sync-indicator.synced {
+            background: rgba(63, 185, 80, 0.12);
+            color: var(--green);
+            border: 1px solid rgba(63, 185, 80, 0.25);
+        }
+
+        .sync-indicator.manual {
+            background: rgba(210, 153, 29, 0.12);
+            color: var(--orange);
+            border: 1px solid rgba(210, 153, 29, 0.3);
+            cursor: pointer;
+        }
+
+        .sync-indicator.manual:hover {
+            background: rgba(210, 153, 29, 0.2);
+            border-color: rgba(210, 153, 29, 0.5);
+        }
+
+        .output-block {
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #1c2128;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            transition: all var(--transition);
+        }
+
+        .output-block.highlight {
+            background: var(--accent-lot-soft);
+            border-color: rgba(88, 166, 255, 0.2);
+        }
+
+        .card-rr .output-block.highlight {
+            background: var(--accent-rr-soft);
+            border-color: rgba(247, 129, 102, 0.2);
+        }
+
+        .output-block.final-result {
+            background: linear-gradient(135deg, rgba(63, 185, 80, 0.08), rgba(63, 185, 80, 0.03));
+            border: 1.5px solid rgba(63, 185, 80, 0.3);
+            padding: 14px 16px;
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .output-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .output-value {
+            font-family: var(--font-mono);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .output-value.accent-lot {
+            color: var(--accent-lot);
+        }
+
+        .output-value.accent-rr {
+            color: var(--accent-rr);
+        }
+
+        .output-value.green {
+            color: var(--green);
+        }
+
+        .output-value.red {
+            color: var(--red);
+        }
+
+        .output-value.purple {
+            color: var(--accent-fib);
+        }
+
+        .final-result .output-value {
+            font-size: 1.4rem;
+            color: var(--green);
+        }
+
+        .sub-outputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .sub-output {
+            padding: 8px 10px;
+            background: #1a1f27;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .sub-output .output-label {
+            font-size: 0.65rem;
+        }
+
+        .sub-output .output-value {
+            font-size: 0.9rem;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            background: #0d1117;
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            border: 1px solid var(--input-border);
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-sans);
+        }
+
+        .toggle-btn.active-buy {
+            background: var(--green);
+            color: #fff;
+            box-shadow: 0 0 8px rgba(63, 185, 80, 0.4);
+        }
+
+        .toggle-btn.active-sell {
+            background: var(--red);
+            color: #fff;
+            box-shadow: 0 0 8px rgba(248, 81, 73, 0.4);
+        }
+
+        .pip-note {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px dashed var(--card-border);
+            margin: 14px 0 10px;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 16px 14px 14px;
+            }
+
+            .sub-outputs {
+                grid-template-columns: 1fr;
+            }
+
+            .output-value {
+                font-size: 1rem;
+            }
+
+            .final-result .output-value {
+                font-size: 1.2rem;
+            }
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <span class="logo-icon">📊</span>
+            <h1>Trading System Calculator</h1>
+            <p class="subtitle">Lot Size · Net RR Adjuster · Fibonacci Entry Signal (Correct Formula)</p>
+        </div>
+
+        <div class="sections-grid">
+            <!-- SECTION 1: Lot Size Calculator -->
+            <div class="card card-lot">
+                <div class="card-header">
+                    <div class="card-icon">🧮</div>
+                    <div class="card-title">Lot Size Calculator<small>Risiko & ukuran lot ideal</small></div>
+                </div>
+                <div class="form-group">
+                    <label>💰 Account Balance</label>
+                    <div class="input-wrapper"><input type="number" id="balance" value="10000" min="0" step="100"><span class="input-suffix">$</span></div>
+                </div>
+                <div class="form-group">
+                    <label>⚠️ Risk Per Trade</label>
+                    <div class="input-wrapper"><input type="number" id="riskPercent" value="1" min="0" step="0.1"><span class="input-suffix">%</span></div>
+                </div>
+                <div class="form-group">
+                    <label>🎯 Jarak Stop Loss</label>
+                    <div class="input-wrapper"><input type="number" id="slPips" value="50" min="0.1" step="1"><span class="input-suffix">Pips</span></div>
+                </div>
+                <hr class="divider">
+                <div class="output-block highlight">
+                    <div class="output-label">💸 Nominal Uang Diresikokan</div>
+                    <div class="output-value red" id="riskAmount">$100.00</div>
+                </div>
+                <div class="output-block highlight" style="margin-top:8px;">
+                    <div class="output-label">📐 Rekomendasi Lot (Standard)</div>
+                    <div class="output-value accent-lot" id="recommendedLot">0.20 Lots</div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Net RR Adjuster -->
+            <div class="card card-rr">
+                <div class="card-header">
+                    <div class="card-icon">📈</div>
+                    <div class="card-title">Net RR Adjuster<small>Komisi & RR visual di chart</small></div>
+                </div>
+                <div class="form-group">
+                    <label>📦 Ukuran Lot <span class="sync-indicator synced" id="syncBadge">🔄 Synced</span></label>
+                    <div class="input-wrapper"><input type="number" id="lotSize" value="0.20" min="0.01" step="0.01"><span class="input-suffix">Lots</span></div>
+                </div>
+                <div class="form-group">
+                    <label>💳 Tarif Komisi Broker</label>
+                    <div class="input-wrapper"><input type="number" id="komisiRate" value="6" min="0" step="0.5"><span class="input-suffix">$/Lot RT</span></div>
+                </div>
+                <div class="form-group">
+                    <label>🎯 Target Net RR (1 : X)</label>
+                    <div class="input-wrapper"><input type="number" id="targetNetRR" value="3" min="0.1" step="0.1"><span class="input-suffix">Ratio</span></div>
+                </div>
+                <hr class="divider">
+                <div class="sub-outputs">
+                    <div class="sub-output"><div class="output-label">📉 Loss Kotor Chart</div><div class="output-value red" id="lossKotor">$100.00</div></div>
+                    <div class="sub-output"><div class="output-label">🧾 Total Beban Komisi</div><div class="output-value" id="totalKomisi" style="color:#d2991d;">$1.20</div></div>
+                </div>
+                <div class="output-block"><div class="output-label">🔻 Loss Bersih (Net Risk)</div><div class="output-value red" id="lossBersih">$101.20</div></div>
+                <div class="output-block"><div class="output-label">🔺 Profit Bersih Dicari</div><div class="output-value green" id="profitBersih">$303.60</div></div>
+                <div class="sub-outputs"><div class="sub-output" style="grid-column:1/-1;"><div class="output-label">📊 Profit Kotor di Chart</div><div class="output-value green" id="profitKotor">$304.80</div></div></div>
+                <div class="output-block final-result">
+                    <div class="output-label">🏁 Pasang RR Visual di Chart</div>
+                    <div class="output-value" id="rrVisualFinal">1 : 3.05</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Fibonacci Entry Signal -->
+        <div class="card card-fib" id="fibonacciCard">
+            <div class="card-header">
+                <div class="card-icon">🔮</div>
+                <div class="card-title">Fibonacci Entry Signal (0.715)<small>Hitung entry, TP, lot & net profit</small></div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end;">
+                <div class="form-group" style="flex:1; min-width:120px;">
+                    <label>📈 High Price</label>
+                    <div class="input-wrapper"><input type="number" id="fibHigh" value="1.1000" step="0.0001" min="0"><span class="input-suffix">Price</span></div>
+                </div>
+                <div class="form-group" style="flex:1; min-width:120px;">
+                    <label>📉 Low Price</label>
+                    <div class="input-wrapper"><input type="number" id="fibLow" value="1.0800" step="0.0001" min="0"><span class="input-suffix">Price</span></div>
+                </div>
+                <div class="form-group" style="flex:1; min-width:150px;">
+                    <label>🔽🔼 Arah Trade</label>
+                    <div class="toggle-group" id="sideToggle">
+                        <button class="toggle-btn active-buy" data-side="buy">BUY</button>
+                        <button class="toggle-btn" data-side="sell">SELL</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pip-note">📌 Rumus Entry: BUY = High - (Range × 0.715) | SELL = Low + (Range × 0.715). SL di Low (Buy) / High (Sell).</div>
+            <hr class="divider">
+            <div class="sub-outputs" style="grid-template-columns: repeat(auto-fit, minmax(130px,1fr));">
+                <div class="sub-output"><div class="output-label">📍 Entry Price</div><div class="output-value purple" id="fibEntry">1.0857</div></div>
+                <div class="sub-output"><div class="output-label">🎯 TP Price</div><div class="output-value green" id="fibTP">1.0980</div></div>
+                <div class="sub-output"><div class="output-label">📐 Lot (dari risiko)</div><div class="output-value accent-lot" id="fibLot">0.14</div></div>
+                <div class="sub-output"><div class="output-label">💵 Net Profit ($)</div><div class="output-value green" id="fibNetProfit">$180.45</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // --- DOM refs ---
+            const balanceInput = document.getElementById('balance');
+            const riskPercentInput = document.getElementById('riskPercent');
+            const slPipsInput = document.getElementById('slPips');
+            const riskAmountDisplay = document.getElementById('riskAmount');
+            const recommendedLotDisplay = document.getElementById('recommendedLot');
+
+            const lotSizeInput = document.getElementById('lotSize');
+            const komisiRateInput = document.getElementById('komisiRate');
+            const targetNetRRInput = document.getElementById('targetNetRR');
+            const lossKotorDisplay = document.getElementById('lossKotor');
+            const totalKomisiDisplay = document.getElementById('totalKomisi');
+            const lossBersihDisplay = document.getElementById('lossBersih');
+            const profitBersihDisplay = document.getElementById('profitBersih');
+            const profitKotorDisplay = document.getElementById('profitKotor');
+            const rrVisualFinalDisplay = document.getElementById('rrVisualFinal');
+            const syncBadge = document.getElementById('syncBadge');
+
+            const fibHighInput = document.getElementById('fibHigh');
+            const fibLowInput = document.getElementById('fibLow');
+            const fibEntryDisplay = document.getElementById('fibEntry');
+            const fibTPDisplay = document.getElementById('fibTP');
+            const fibLotDisplay = document.getElementById('fibLot');
+            const fibNetProfitDisplay = document.getElementById('fibNetProfit');
+            const sideButtons = document.querySelectorAll('#sideToggle .toggle-btn');
+
+            const PIP_SIZE = 0.0001;
+            const FIB_LEVEL = 0.715;
+
+            let manualLotEdit = false;
+            let lastSyncedLotValue = null;
+            let currentTradeSide = 'buy';
+            let isUpdatingFromFib = false;
+
+            const safeFloat = v => { let n = parseFloat(v); return isNaN(n) || !isFinite(n) ? 0 : n; };
+            const fmt$ = n => '$' + n.toFixed(2);
+            const fmtLot = n => n.toFixed(2) + ' Lots';
+            const fmtRR = n => '1 : ' + n.toFixed(2);
+
+            function updateSyncBadge() {
+                if (manualLotEdit) {
+                    syncBadge.className = 'sync-indicator manual';
+                    syncBadge.innerHTML = '↻ Manual (klik re-sync)';
+                } else {
+                    syncBadge.className = 'sync-indicator synced';
+                    syncBadge.innerHTML = '🔄 Synced';
+                }
+            }
+
+            function computeVisualRR(lot, slPips, komisiRate, targetNetRR) {
+                const lossKotor = lot * slPips * 10;
+                const totalKomisi = lot * komisiRate;
+                const lossBersih = lossKotor + totalKomisi;
+                if (lossKotor <= 0) return 0;
+                const profitBersih = lossBersih * targetNetRR;
+                const profitKotor = profitBersih + totalKomisi;
+                return profitKotor / lossKotor;
+            }
+
+            function calculateSection2() {
+                const lot = safeFloat(lotSizeInput.value);
+                const slPips = safeFloat(slPipsInput.value);
+                const komisiRate = safeFloat(komisiRateInput.value);
+                const targetNetRR = safeFloat(targetNetRRInput.value);
+
+                const lossKotor = lot * slPips * 10;
+                const totalKomisi = lot * komisiRate;
+                const lossBersih = lossKotor + totalKomisi;
+                const profitBersih = lossBersih * targetNetRR;
+                const profitKotor = profitBersih + totalKomisi;
+                let rrVisual = 0;
+                if (lossKotor > 0 && isFinite(lossKotor)) rrVisual = profitKotor / lossKotor;
+
+                lossKotorDisplay.textContent = fmt$(lossKotor);
+                totalKomisiDisplay.textContent = fmt$(totalKomisi);
+                lossBersihDisplay.textContent = fmt$(lossBersih);
+                profitBersihDisplay.textContent = fmt$(profitBersih);
+                profitKotorDisplay.textContent = fmt$(profitKotor);
+                rrVisualFinalDisplay.textContent = (lossKotor > 0 && rrVisual > 0) ? fmtRR(rrVisual) : '1 : —';
+            }
+
+            function calculateSection1() {
+                const balance = safeFloat(balanceInput.value);
+                const riskPct = safeFloat(riskPercentInput.value);
+                const slPips = safeFloat(slPipsInput.value);
+                const riskAmount = balance * (riskPct / 100);
+                let recLot = 0;
+                if (slPips > 0 && isFinite(slPips)) recLot = riskAmount / (slPips * 10);
+
+                riskAmountDisplay.textContent = fmt$(riskAmount);
+                recommendedLotDisplay.textContent = (slPips > 0 && recLot >= 0) ? fmtLot(recLot) : '0.00 Lots';
+
+                if (!manualLotEdit && !isUpdatingFromFib) {
+                    if (recLot > 0 && slPips > 0 && isFinite(recLot)) {
+                        lotSizeInput.value = recLot.toFixed(2);
+                        lastSyncedLotValue = recLot;
+                        updateSyncBadge();
+                    }
+                }
+                calculateSection2();
+                if (!isUpdatingFromFib) updateFibonacci();
+            }
+
+            function updateFibonacci() {
+                isUpdatingFromFib = true;
+                const high = safeFloat(fibHighInput.value);
+                const low = safeFloat(fibLowInput.value);
+                const range = high - low;
+                if (range <= 0 || !isFinite(range)) {
+                    fibEntryDisplay.textContent = '—';
+                    fibTPDisplay.textContent = '—';
+                    fibLotDisplay.textContent = '—';
+                    fibNetProfitDisplay.textContent = '—';
+                    isUpdatingFromFib = false;
+                    return;
+                }
+
+                const fibLevel = FIB_LEVEL;
+                let entryPrice, slPrice;
+                // === RUMUS BARU SESUAI PERMINTAAN ===
+                if (currentTradeSide === 'buy') {
+                    entryPrice = high - (range * fibLevel);   // High - (Angka Kunci x 0.715)
+                    slPrice = low;                            // SL di Low
+                } else { // sell
+                    entryPrice = low + (range * fibLevel);    // Low + (Angka Kunci x 0.715)
+                    slPrice = high;                           // SL di High
+                }
+
+                const slDistance = Math.abs(entryPrice - slPrice);
+                const slPips = slDistance / PIP_SIZE;
+
+                const balance = safeFloat(balanceInput.value);
+                const riskPct = safeFloat(riskPercentInput.value);
+                const riskAmount = balance * (riskPct / 100);
+                let fibLot = 0;
+                if (slPips > 0) fibLot = riskAmount / (slPips * 10);
+                fibLot = Math.max(0, fibLot);
+
+                const komisiRate = safeFloat(komisiRateInput.value);
+                const targetNetRR = safeFloat(targetNetRRInput.value);
+                const visualRR = computeVisualRR(fibLot, slPips, komisiRate, targetNetRR);
+
+                const tpPips = slPips * visualRR;
+                let tpPrice;
+                if (currentTradeSide === 'buy') {
+                    tpPrice = entryPrice + tpPips * PIP_SIZE;
+                } else {
+                    tpPrice = entryPrice - tpPips * PIP_SIZE;
+                }
+
+                const lossKotor = fibLot * slPips * 10;
+                const totalKomisi = fibLot * komisiRate;
+                const lossBersih = lossKotor + totalKomisi;
+                const netProfit = lossBersih * targetNetRR;
+
+                fibEntryDisplay.textContent = entryPrice.toFixed(5);
+                fibTPDisplay.textContent = tpPrice.toFixed(5);
+                fibLotDisplay.textContent = fibLot.toFixed(2);
+                fibNetProfitDisplay.textContent = fmt$(netProfit);
+
+                if (!manualLotEdit && fibLot > 0 && isFinite(fibLot)) {
+                    lotSizeInput.value = fibLot.toFixed(2);
+                    lastSyncedLotValue = fibLot;
+                    updateSyncBadge();
+                    calculateSection2();
+                } else {
+                    calculateSection2();
+                }
+
+                isUpdatingFromFib = false;
+            }
+
+            sideButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    sideButtons.forEach(b => {
+                        b.classList.remove('active-buy', 'active-sell');
+                    });
+                    const side = this.dataset.side;
+                    currentTradeSide = side;
+                    if (side === 'buy') {
+                        this.classList.add('active-buy');
+                    } else {
+                        this.classList.add('active-sell');
+                    }
+                    updateFibonacci();
+                });
+            });
+
+            balanceInput.addEventListener('input', calculateSection1);
+            riskPercentInput.addEventListener('input', calculateSection1);
+            slPipsInput.addEventListener('input', calculateSection1);
+
+            lotSizeInput.addEventListener('input', function() {
+                if (!isUpdatingFromFib) {
+                    manualLotEdit = true;
+                    updateSyncBadge();
+                }
+                calculateSection2();
+                if (!isUpdatingFromFib) updateFibonacci();
+            });
+            komisiRateInput.addEventListener('input', function() {
+                calculateSection2();
+                updateFibonacci();
+            });
+            targetNetRRInput.addEventListener('input', function() {
+                calculateSection2();
+                updateFibonacci();
+            });
+
+            syncBadge.addEventListener('click', function() {
+                if (manualLotEdit) {
+                    manualLotEdit = false;
+                    updateSyncBadge();
+                    const high = safeFloat(fibHighInput.value);
+                    const low = safeFloat(fibLowInput.value);
+                    if ((high - low) > 0 && isFinite(high) && isFinite(low)) {
+                        updateFibonacci();
+                    } else {
+                        calculateSection1();
+                    }
+                }
+            });
+
+            fibHighInput.addEventListener('input', updateFibonacci);
+            fibLowInput.addEventListener('input', updateFibonacci);
+
+            function initialize() {
+                manualLotEdit = false;
+                updateSyncBadge();
+                lastSyncedLotValue = safeFloat(lotSizeInput.value);
+                calculateSection1();
+            }
+            initialize();
+        })();
+    </script>
+</body>
+</html>
