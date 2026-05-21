@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Calculator — With/Without Commission & Fibo TP</title>
+    <title>Trading Calculator — Lot Selalu Sinkron</title>
     <style>
         :root {
             --bg: #0d1117;
@@ -104,7 +104,7 @@
     <div class="header">
         <span class="logo-icon">📊</span>
         <h1>Trading System Calculator</h1>
-        <p class="subtitle">XAUUSD & AUDUSD • Akun Komisi / Tanpa Komisi</p>
+        <p class="subtitle">XAUUSD & AUDUSD • Lot Selalu Sinkron</p>
     </div>
 
     <div class="sections-grid">
@@ -268,7 +268,7 @@
         const sideButtons = document.querySelectorAll('#sideToggle .toggle-btn');
 
         const FIB_ENTRY = 0.715;
-        const FIB_TP_NOCOM = 1.15;  // ekstensi -0.15
+        const FIB_TP_NOCOM = 1.15;
         let manualLotEdit = false;
         let manualSLPipsEdit = false;
         let currentTradeSide = 'buy';
@@ -304,10 +304,7 @@
         function updateAccountTypeUI() {
             const isNoCom = accountTypeSelect.value === 'nocommission';
             targetNetRRGroup.classList.toggle('disabled-input', isNoCom);
-            if (isNoCom) {
-                targetNetRRInput.value = '0'; // tidak digunakan
-            }
-            // Trigger recalc
+            if (isNoCom) targetNetRRInput.value = '0';
             calculateSection2();
             updateFibonacci();
         }
@@ -332,15 +329,12 @@
             const lossKotor = lot * slPips * 10;
             const totalKomisi = lot * komisiRate;
             const lossBersih = lossKotor + totalKomisi;
-
             let profitBersih = 0, profitKotor = 0, rrVisual = 0;
+
             if (isNoCom) {
-                // Untuk akun tanpa komisi, profit kotor = lot * tpPips * 10, profit bersih = profit kotor (karena komisi tetap dihitung? 
-                // User mau tanpa komisi, jadi komisi harus 0, kita akan set komisi = 0 dari input? Biarkan input, tapi perhitungan profit bersih = profit kotor.
-                // Maka di sini kita abaikan komisi untuk profit bersih.
-                const tpPips = getTPPipsFromFibo(); // akan dihitung dari updateFibonacci
+                const tpPips = getTPPipsFromFibo();
                 profitKotor = lot * tpPips * 10;
-                profitBersih = profitKotor; // tanpa komisi
+                profitBersih = profitKotor;
                 if (lossKotor > 0) rrVisual = profitKotor / lossKotor;
             } else {
                 if (lossKotor > 0) {
@@ -359,7 +353,6 @@
         }
 
         function getTPPipsFromFibo() {
-            // Helper untuk mendapatkan tpPips berdasarkan Fibonacci tanpa komisi
             const high = safeFloat(fibHighInput.value);
             const low = safeFloat(fibLowInput.value);
             const range = high - low;
@@ -382,7 +375,14 @@
             if (slPips > 0) recLot = riskAmount / (slPips * 10);
 
             riskAmountDisplay.textContent = fmt$(riskAmount);
-            recommendedLotDisplay.textContent = slPips>0 ? fmtLot(recLot) : '0.00 Lots';
+
+            // ** PERBAIKAN UTAMA: Selalu gunakan nilai lot dari Fibonacci jika tersedia **
+            const fibLotValue = safeFloat(fibLotDisplay.textContent);
+            if (fibLotValue > 0 && !isUpdatingFromFib) {
+                recommendedLotDisplay.textContent = fmtLot(fibLotValue);
+            } else {
+                recommendedLotDisplay.textContent = slPips > 0 ? fmtLot(recLot) : '0.00 Lots';
+            }
 
             if (!manualLotEdit && !isUpdatingFromFib) {
                 if (recLot > 0 && slPips > 0) {
@@ -438,13 +438,12 @@
             const isNoCom = accountTypeSelect.value === 'nocommission';
             let tpPips = 0, tpPrice = 0, netProfit = 0;
             if (isNoCom) {
-                // TP dari level 1.15
                 tpPrice = currentTradeSide === 'buy' ? low + range * FIB_TP_NOCOM : high - range * FIB_TP_NOCOM;
                 const tpDistance = Math.abs(tpPrice - entryPrice);
                 const tpPoints = tpDistance / pointSize;
                 tpPips = tpPoints / pointPerPip;
                 const profitKotor = fibLot * tpPips * 10;
-                netProfit = profitKotor; // tanpa komisi
+                netProfit = profitKotor;
             } else {
                 const komisiRate = safeFloat(komisiRateInput.value);
                 const targetNetRR = safeFloat(targetNetRRInput.value);
@@ -463,6 +462,9 @@
             fibLotDisplay.textContent = fibLot.toFixed(2);
             fibNetProfitDisplay.textContent = fmt$(netProfit);
 
+            // ** Sinkronisasi lot ke Seksi 1 **
+            recommendedLotDisplay.textContent = fmtLot(fibLot);
+
             if (!manualLotEdit && fibLot > 0) {
                 lotSizeInput.value = fibLot.toFixed(2);
                 updateLotSyncBadge();
@@ -475,7 +477,6 @@
         // Event listeners
         pairSelect.addEventListener('change', applyPairDefaults);
         accountTypeSelect.addEventListener('change', updateAccountTypeUI);
-
         pointSizeInput.addEventListener('input', function() {
             if (!manualSLPipsEdit) updateFibonacci();
             else calculateSection1();
@@ -519,14 +520,13 @@
         fibHighInput.addEventListener('input', updateFibonacci);
         fibLowInput.addEventListener('input', updateFibonacci);
 
-        // Initial
         function initialize() {
             manualLotEdit = false;
             manualSLPipsEdit = false;
             updateLotSyncBadge();
             updateSLSyncBadge();
             applyPairDefaults();
-            updateAccountTypeUI(); // set UI awal
+            updateAccountTypeUI();
         }
         initialize();
     })();
