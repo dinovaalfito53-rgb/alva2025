@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASSO Trading System Calculator</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --accent-color: #58a6ff;
+            --success-color: #2ea44f;
+            --warning-color: #f0883e;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #ffffff;
+            font-size: 1.4rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        h3 {
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            margin: 20px 0 12px 0;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 6px;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .result-box {
+            background-color: rgba(88, 166, 255, 0.05);
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 14px;
+            margin-top: 14px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .highlight {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .final-lot {
+            color: var(--warning-color);
+            font-size: 1.15rem;
+            font-weight: bold;
+        }
+
+        .final-rr {
+            color: var(--success-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ASSO System Operator</h2>
+    
+    <h3>1. Lot Size Calculator</h3>
+    
+    <div class="input-group">
+        <label for="balance">Account Balance ($)</label>
+        <input type="number" id="balance" step="100" value="1000">
+    </div>
+
+    <div class="input-group">
+        <label for="riskPersen">Risk Per Trade (%)</label>
+        <input type="number" id="riskPersen" step="0.1" value="1">
+    </div>
+
+    <div class="input-group">
+        <label for="slPips">Jarak SL (Pips)</label>
+        <input type="number" id="slPips" step="0.1" value="5.5">
+    </div>
+
+    <div class="result-box" style="border-color: var(--warning-color);">
+        <div class="result-item">
+            <span>Uang Diresikokan:</span>
+            <span id="resRiskDolar" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item" style="margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color);">
+            <span>Rekomendasi Lot (Standard):</span>
+            <span id="resLotSaran" class="final-lot">0.00</span>
+        </div>
+    </div>
+
+    <h3>2. Net RR Adjuster (After Commission)</h3>
+
+    <div class="input-group">
+        <label for="lotSize">Ukuran Lot (Otomatis Sync / Bisa Diubah)</label>
+        <input type="number" id="lotSize" step="0.01" value="0.18">
+    </div>
+
+    <div class="input-group">
+        <label for="komisiPerLot">Tarif Komisi Broker ($/Lot)</label>
+        <input type="number" id="komisiPerLot" step="1" value="6">
+    </div>
+
+    <div class="input-group">
+        <label for="targetNetRR">Target Masuk Kantong Bersih (1 : X)</label>
+        <input type="number" id="targetNetRR" step="0.1" value="3">
+    </div>
+
+    <div class="result-box" style="border-color: var(--success-color);">
+        <div class="result-item">
+            <span>Total Beban Komisi (RT):</span>
+            <span id="resKomisi" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item">
+            <span>Loss Bersih (Kotor + Komisi):</span>
+            <span id="resLossBersih" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item">
+            <span>Profit Bersih Yang Dicari:</span>
+            <span id="resProfitBersih" class="highlight">$0.00</span>
+        </div>
+        <div class="result-item" style="border-top: 1px solid var(--border-color); margin-top: 10px; padding-top: 10px;">
+            <span>Pasang RR Visual di Chart:</span>
+            <span id="resVisualRR" class="final-rr">1 : 0.00</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Element Selector Section 1
+    const balanceInput = document.getElementById('balance');
+    const riskPersenInput = document.getElementById('riskPersen');
+    const slPipsInput = document.getElementById('slPips');
+
+    // Element Selector Section 2
+    const lotSizeInput = document.getElementById('lotSize');
+    const komisiInput = document.getElementById('komisiPerLot');
+    const targetRRInput = document.getElementById('targetNetRR');
+
+    function hitungSemua() {
+        // --- PROSES SEKSI 1: KALKULATOR LOT ---
+        const balance = parseFloat(balanceInput.value) || 0;
+        const riskPersen = parseFloat(riskPersenInput.value) || 0;
+        const slPips = parseFloat(slPipsInput.value) || 0;
+
+        // Hitung nominal resiko dolar
+        const riskDolar = balance * (riskPersen / 100);
+        
+        // Formula standar forex (1 Pip pada 1 Lot standar senilai $10 untuk pair mayor/cross mayor seperti AUDUSD)
+        let rekomendasiLot = 0;
+        if (slPips > 0) {
+            rekomendasiLot = riskDolar / (slPips * 10);
+        }
+
+        // Tampilkan hasil Seksi 1
+        document.getElementById('resRiskDolar').innerText = `$${riskDolar.toFixed(2)}`;
+        document.getElementById('resLotSaran').innerText = rekomendasiLot.toFixed(2);
+
+        // SYNC OTOMATIS: Kirim hasil rekomendasi lot ke input kolom Lot Size di Seksi 2
+        // Hanya sinkron otomatis jika pemicu inputnya datang dari Section 1
+        if (document.activeElement !== lotSizeInput) {
+            lotSizeInput.value = rekomendasiLot.toFixed(2);
+        }
+
+        // --- PROSES SEKSI 2: KALKULATOR NET RR ---
+        const lotSize = parseFloat(lotSizeInput.value) || 0;
+        const komisiPerLot = parseFloat(komisiInput.value) || 0;
+        const targetNetRR = parseFloat(targetRRInput.value) || 0;
+
+        // Loss kotor didapat langsung dari nominal risk seksi 1 (atau fallback kalkulasi manual lot * sl * 10)
+        const lossKotor = lotSize * slPips * 10;
+
+        // 1. Total komisi round turn
+        const totalKomisi = lotSize * komisiPerLot;
+
+        // 2. Loss bersih (Loss kotor + komisi)
+        const lossBersih = lossKotor + totalKomisi;
+
+        // 3. Profit bersih yang dicari sesuai target RR
+        const profitBersihDicari = lossBersih * targetNetRR;
+
+        // 4. Profit kotor di chart untuk nutup komisi kembali
+        const profitKotorChart = profitBersihDicari + totalKomisi;
+
+        // 5. Rasio RR Visual untuk dipasang di TradingView/MT5
+        let visualRR = 0;
+        if (lossKotor > 0) {
+            visualRR = profitKotorChart / lossKotor;
+        }
+
+        // Tampilkan hasil Seksi 2
+        document.getElementById('resKomisi').innerText = `$${totalKomisi.toFixed(2)}`;
+        document.getElementById('resLossBersih').innerText = `$${lossBersih.toFixed(2)}`;
+        document.getElementById('resProfitBersih').innerText = `$${profitBersihDicari.toFixed(2)}`;
+        document.getElementById('resVisualRR').innerText = `1 : ${visualRR.toFixed(2)}`;
+    }
+
+    // Pasang Event Listener ke semua input agar kalkulasi berjalan real-time
+    const semuaInput = [balanceInput, riskPersenInput, slPipsInput, lotSizeInput, komisiInput, targetRRInput];
+    semuaInput.forEach(input => {
+        input.addEventListener('input', hitungSemua);
+    });
+
+    // Jalankan kalkulasi pertama kali saat file dibuka
+    hitungSemua();
+</script>
+
+</body>
+</html>
