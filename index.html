@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading System Calculator — Lot, RR & Fibonacci Entry (SL Sync)</title>
+    <title>Trading Calculator — With/Without Commission & Fibo TP</title>
     <style>
         :root {
             --bg: #0d1117;
@@ -16,11 +16,8 @@
             --input-border: #30363d;
             --input-focus: #58a6ff;
             --accent-lot: #58a6ff;
-            --accent-lot-soft: rgba(88, 166, 255, 0.08);
             --accent-rr: #f78166;
-            --accent-rr-soft: rgba(247, 129, 102, 0.08);
             --accent-fib: #bc8cff;
-            --accent-fib-soft: rgba(188, 140, 255, 0.08);
             --green: #3fb950;
             --red: #f85149;
             --orange: #d2991d;
@@ -28,105 +25,76 @@
             --radius-md: 12px;
             --radius-lg: 16px;
             --transition: 0.2s ease;
-            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Menlo', monospace;
-            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            background: var(--bg);
-            color: var(--text-primary);
-            font-family: var(--font-sans);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: var(--bg); color: var(--text-primary);
+            font-family: var(--font-sans); min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
             padding: 20px;
             background-image: radial-gradient(ellipse at 20% 20%, rgba(88,166,255,0.03) 0%, transparent 55%),
                               radial-gradient(ellipse at 80% 70%, rgba(247,129,102,0.03) 0%, transparent 55%),
                               radial-gradient(ellipse at 50% 50%, rgba(188,140,255,0.02) 0%, transparent 60%);
         }
-        .main-container { width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 20px; }
-        .header { text-align: center; padding: 8px 0 4px; }
-        .header .logo-icon { font-size: 2.4rem; display: block; margin-bottom: 4px; }
-        .header h1 { font-size: 1.55rem; font-weight: 700; }
-        .header .subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px; }
-        .sections-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-        @media (max-width: 720px) { .sections-grid { grid-template-columns: 1fr; } .header h1 { font-size: 1.35rem; } body { padding: 12px; } }
+        .main-container { width:100%; max-width:1000px; display:flex; flex-direction:column; gap:20px; }
+        .header { text-align:center; padding:8px 0 4px; }
+        .header .logo-icon { font-size:2.4rem; display:block; margin-bottom:4px; }
+        .header h1 { font-size:1.55rem; font-weight:700; }
+        .header .subtitle { font-size:0.85rem; color:var(--text-secondary); margin-top:2px; }
+        .sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+        @media (max-width:720px) { .sections-grid { grid-template-columns:1fr; } .header h1 { font-size:1.35rem; } }
         .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 22px 20px 18px;
+            background:var(--card-bg); border:1px solid var(--card-border);
+            border-radius:var(--radius-lg); padding:22px 20px 18px;
             transition: border-color var(--transition), box-shadow var(--transition);
         }
-        .card-lot { border-top: 3px solid var(--accent-lot); }
-        .card-rr { border-top: 3px solid var(--accent-rr); }
-        .card-fib { border-top: 3px solid var(--accent-fib); margin-top: 2px; }
-        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--card-border); }
-        .card-icon {
-            width: 36px; height: 36px; border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        .card-lot { border-top:3px solid var(--accent-lot); }
+        .card-rr { border-top:3px solid var(--accent-rr); }
+        .card-fib { border-top:3px solid var(--accent-fib); margin-top:2px; }
+        .card-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--card-border); }
+        .card-icon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+        .card-lot .card-icon { background: rgba(88,166,255,0.08); color:var(--accent-lot); }
+        .card-rr .card-icon { background: rgba(247,129,102,0.08); color:var(--accent-rr); }
+        .card-fib .card-icon { background: rgba(188,140,255,0.08); color:var(--accent-fib); }
+        .card-title { font-weight:700; font-size:1rem; }
+        .card-title small { display:block; font-weight:400; font-size:0.75rem; color:var(--text-secondary); }
+        .form-group { margin-bottom:13px; }
+        .form-group label { display:flex; align-items:center; justify-content:space-between; font-size:0.8rem; font-weight:500; color:var(--text-secondary); margin-bottom:5px; text-transform:uppercase; }
+        .input-wrapper { position:relative; }
+        .input-wrapper input, .input-wrapper select {
+            width:100%; padding:10px 14px; background:var(--input-bg);
+            border:1.5px solid var(--input-border); border-radius:var(--radius-sm);
+            color:var(--text-primary); font-family:var(--font-mono); font-size:0.95rem;
+            outline:none; transition: all var(--transition);
         }
-        .card-lot .card-icon { background: var(--accent-lot-soft); color: var(--accent-lot); }
-        .card-rr .card-icon { background: var(--accent-rr-soft); color: var(--accent-rr); }
-        .card-fib .card-icon { background: var(--accent-fib-soft); color: var(--accent-fib); }
-        .card-title { font-weight: 700; font-size: 1rem; }
-        .card-title small { display: block; font-weight: 400; font-size: 0.75rem; color: var(--text-secondary); }
-        .form-group { margin-bottom: 13px; }
-        .form-group label {
-            display: flex; align-items: center; justify-content: space-between;
-            font-size: 0.8rem; font-weight: 500; color: var(--text-secondary);
-            margin-bottom: 5px; text-transform: uppercase;
-        }
-        .input-wrapper { position: relative; }
-        .input-wrapper input {
-            width: 100%; padding: 10px 14px; background: var(--input-bg);
-            border: 1.5px solid var(--input-border); border-radius: var(--radius-sm);
-            color: var(--text-primary); font-family: var(--font-mono); font-size: 0.95rem;
-            outline: none; transition: all var(--transition);
-        }
-        .input-wrapper input:focus { border-color: var(--input-focus); box-shadow: 0 0 0 3px rgba(88,166,255,0.1); }
-        .input-suffix {
-            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-            color: var(--text-muted); font-size: 0.8rem; pointer-events: none;
-        }
-        .sync-indicator {
-            display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem;
-            font-weight: 600; padding: 3px 9px; border-radius: 20px;
-            transition: all var(--transition); cursor: default; white-space: nowrap;
-        }
-        .sync-indicator.synced { background: rgba(63,185,80,0.12); color: var(--green); border:1px solid rgba(63,185,80,0.25); }
-        .sync-indicator.manual { background: rgba(210,153,29,0.12); color: var(--orange); border:1px solid rgba(210,153,29,0.3); cursor: pointer; }
-        .output-block {
-            margin-top: 10px; padding: 10px 14px; background: #1c2128;
-            border-radius: var(--radius-sm); border:1px solid transparent;
-        }
-        .output-block.highlight { background: var(--accent-lot-soft); border-color: rgba(88,166,255,0.2); }
-        .output-block.final-result {
-            background: linear-gradient(135deg, rgba(63,185,80,0.08), rgba(63,185,80,0.03));
-            border:1.5px solid rgba(63,185,80,0.3); padding:14px 16px; margin-top:14px; text-align:center;
-        }
+        .input-wrapper input:focus, .input-wrapper select:focus { border-color:var(--input-focus); box-shadow:0 0 0 3px rgba(88,166,255,0.1); }
+        .input-suffix { position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.8rem; pointer-events:none; }
+        .sync-indicator { display:inline-flex; align-items:center; gap:5px; font-size:0.7rem; font-weight:600; padding:3px 9px; border-radius:20px; transition:all var(--transition); cursor:default; }
+        .sync-indicator.synced { background:rgba(63,185,80,0.12); color:var(--green); border:1px solid rgba(63,185,80,0.25); }
+        .sync-indicator.manual { background:rgba(210,153,29,0.12); color:var(--orange); border:1px solid rgba(210,153,29,0.3); cursor:pointer; }
+        .output-block { margin-top:10px; padding:10px 14px; background:#1c2128; border-radius:var(--radius-sm); border:1px solid transparent; }
+        .output-block.highlight { background:rgba(88,166,255,0.08); border-color:rgba(88,166,255,0.2); }
+        .output-block.final-result { background:linear-gradient(135deg, rgba(63,185,80,0.08), rgba(63,185,80,0.03)); border:1.5px solid rgba(63,185,80,0.3); padding:14px 16px; margin-top:14px; text-align:center; }
         .output-label { font-size:0.7rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
-        .output-value { font-family: var(--font-mono); font-size:1.15rem; font-weight:700; }
-        .output-value.accent-lot { color: var(--accent-lot); }
-        .output-value.green { color: var(--green); }
-        .output-value.red { color: var(--red); }
-        .output-value.purple { color: var(--accent-fib); }
+        .output-value { font-family:var(--font-mono); font-size:1.15rem; font-weight:700; }
+        .output-value.accent-lot { color:var(--accent-lot); }
+        .output-value.green { color:var(--green); }
+        .output-value.red { color:var(--red); }
+        .output-value.purple { color:var(--accent-fib); }
         .final-result .output-value { font-size:1.4rem; color:var(--green); }
-        .sub-outputs { display: grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px; }
+        .sub-outputs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
         .sub-output { padding:8px 10px; background:#1a1f27; border-radius:6px; text-align:center; }
         .sub-output .output-label { font-size:0.65rem; }
         .sub-output .output-value { font-size:0.9rem; }
-        .toggle-group { display: flex; gap: 8px; background: #0d1117; border-radius: var(--radius-sm); padding: 4px; border:1px solid var(--input-border); }
-        .toggle-btn {
-            flex:1; padding: 10px 8px; border-radius: 6px; text-align: center;
-            font-weight: 600; font-size: 0.9rem; border: none; background: transparent;
-            color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
-        }
-        .toggle-btn.active-buy { background: var(--green); color:#fff; }
-        .toggle-btn.active-sell { background: var(--red); color:#fff; }
-        .pip-note { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; text-align: right; }
-        .divider { border: none; border-top: 1px dashed var(--card-border); margin: 14px 0 10px; opacity: 0.6; }
+        .toggle-group { display:flex; gap:8px; background:#0d1117; border-radius:var(--radius-sm); padding:4px; border:1px solid var(--input-border); }
+        .toggle-btn { flex:1; padding:10px 8px; border-radius:6px; text-align:center; font-weight:600; font-size:0.9rem; border:none; background:transparent; color:var(--text-secondary); cursor:pointer; transition:all 0.2s; }
+        .toggle-btn.active-buy { background:var(--green); color:#fff; }
+        .toggle-btn.active-sell { background:var(--red); color:#fff; }
+        .pip-note { font-size:0.65rem; color:var(--text-muted); margin-top:4px; text-align:right; }
+        .divider { border:none; border-top:1px dashed var(--card-border); margin:14px 0 10px; opacity:0.6; }
+        .disabled-input { opacity: 0.5; pointer-events: none; }
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
         input[type="number"] { -moz-appearance: textfield; }
     </style>
@@ -136,7 +104,7 @@
     <div class="header">
         <span class="logo-icon">📊</span>
         <h1>Trading System Calculator</h1>
-        <p class="subtitle">Lot Size · Net RR Adjuster · Fibonacci Entry (SL Synced)</p>
+        <p class="subtitle">XAUUSD & AUDUSD • Akun Komisi / Tanpa Komisi</p>
     </div>
 
     <div class="sections-grid">
@@ -147,12 +115,29 @@
                 <div class="card-title">Lot Size Calculator<small>Risiko & ukuran lot ideal</small></div>
             </div>
             <div class="form-group">
+                <label>💱 Pair</label>
+                <div class="input-wrapper">
+                    <select id="pairSelect">
+                        <option value="XAUUSD" selected>XAUUSD (Gold)</option>
+                        <option value="AUDUSD">AUDUSD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
                 <label>💰 Account Balance</label>
                 <div class="input-wrapper"><input type="number" id="balance" value="10000" min="0" step="100"><span class="input-suffix">$</span></div>
             </div>
             <div class="form-group">
                 <label>⚠️ Risk Per Trade</label>
                 <div class="input-wrapper"><input type="number" id="riskPercent" value="1" min="0" step="0.1"><span class="input-suffix">%</span></div>
+            </div>
+            <div class="form-group">
+                <label>🔹 Point Size</label>
+                <div class="input-wrapper"><input type="number" id="pointSize" value="0.01" min="0.000001" step="0.000001"><span class="input-suffix">harga</span></div>
+            </div>
+            <div class="form-group">
+                <label>🔸 Point per Pip</label>
+                <div class="input-wrapper"><input type="number" id="pointPerPip" value="10" min="1" step="1"><span class="input-suffix">point</span></div>
             </div>
             <div class="form-group">
                 <label>
@@ -179,6 +164,15 @@
                 <div class="card-title">Net RR Adjuster<small>Komisi & RR visual di chart</small></div>
             </div>
             <div class="form-group">
+                <label>🏦 Tipe Akun</label>
+                <div class="input-wrapper">
+                    <select id="accountType">
+                        <option value="commission" selected>Dengan Komisi</option>
+                        <option value="nocommission">Tanpa Komisi (TP Fibo 1.15)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
                 <label>📦 Ukuran Lot <span class="sync-indicator synced" id="lotSyncBadge">🔄 Synced</span></label>
                 <div class="input-wrapper"><input type="number" id="lotSize" value="0.20" min="0.01" step="0.01"><span class="input-suffix">Lots</span></div>
             </div>
@@ -186,7 +180,7 @@
                 <label>💳 Tarif Komisi Broker</label>
                 <div class="input-wrapper"><input type="number" id="komisiRate" value="6" min="0" step="0.5"><span class="input-suffix">$/Lot RT</span></div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="targetNetRRGroup">
                 <label>🎯 Target Net RR (1 : X)</label>
                 <div class="input-wrapper"><input type="number" id="targetNetRR" value="3" min="0.1" step="0.1"><span class="input-suffix">Ratio</span></div>
             </div>
@@ -228,7 +222,7 @@
                 </div>
             </div>
         </div>
-        <div class="pip-note">📌 Rumus: BUY Entry = High - (Range × 0.715) | SELL Entry = Low + (Range × 0.715). SL di Low/High.</div>
+        <div class="pip-note">📌 Entry: BUY=High-(Range×0.715) | SELL=Low+(Range×0.715). SL di Low/High.</div>
         <hr class="divider">
         <div class="sub-outputs" style="grid-template-columns: repeat(auto-fit, minmax(130px,1fr));">
             <div class="sub-output"><div class="output-label">📍 Entry Price</div><div class="output-value purple" id="fibEntry">1.0857</div></div>
@@ -241,17 +235,22 @@
 
 <script>
     (function() {
-        // DOM elements
+        // DOM
+        const pairSelect = document.getElementById('pairSelect');
         const balanceInput = document.getElementById('balance');
         const riskPercentInput = document.getElementById('riskPercent');
+        const pointSizeInput = document.getElementById('pointSize');
+        const pointPerPipInput = document.getElementById('pointPerPip');
         const slPipsInput = document.getElementById('slPips');
         const riskAmountDisplay = document.getElementById('riskAmount');
         const recommendedLotDisplay = document.getElementById('recommendedLot');
         const slSyncBadge = document.getElementById('slSyncBadge');
 
+        const accountTypeSelect = document.getElementById('accountType');
         const lotSizeInput = document.getElementById('lotSize');
         const komisiRateInput = document.getElementById('komisiRate');
         const targetNetRRInput = document.getElementById('targetNetRR');
+        const targetNetRRGroup = document.getElementById('targetNetRRGroup');
         const lossKotorDisplay = document.getElementById('lossKotor');
         const totalKomisiDisplay = document.getElementById('totalKomisi');
         const lossBersihDisplay = document.getElementById('lossBersih');
@@ -268,38 +267,49 @@
         const fibNetProfitDisplay = document.getElementById('fibNetProfit');
         const sideButtons = document.querySelectorAll('#sideToggle .toggle-btn');
 
-        const PIP_SIZE = 0.0001;
-        const FIB_LEVEL = 0.715;
-
-        // Sync states
+        const FIB_ENTRY = 0.715;
+        const FIB_TP_NOCOM = 1.15;  // ekstensi -0.15
         let manualLotEdit = false;
         let manualSLPipsEdit = false;
         let currentTradeSide = 'buy';
-        let isUpdatingFromFib = false;    // prevents recursion
+        let isUpdatingFromFib = false;
 
-        const safeFloat = v => { let n = parseFloat(v); return isNaN(n) || !isFinite(n) ? 0 : n; };
-        const fmt$ = n => '$' + n.toFixed(2);
-        const fmtLot = n => n.toFixed(2) + ' Lots';
-        const fmtRR = n => '1 : ' + n.toFixed(2);
+        const safeFloat = v => { let n = parseFloat(v); return isNaN(n)||!isFinite(n)?0:n; };
+        const fmt$ = n => '$'+n.toFixed(2);
+        const fmtLot = n => n.toFixed(2)+' Lots';
+        const fmtRR = n => '1 : '+n.toFixed(2);
 
         function updateLotSyncBadge() {
-            if (manualLotEdit) {
-                lotSyncBadge.className = 'sync-indicator manual';
-                lotSyncBadge.innerHTML = '↻ Manual (klik re-sync)';
-            } else {
-                lotSyncBadge.className = 'sync-indicator synced';
-                lotSyncBadge.innerHTML = '🔄 Synced';
-            }
+            lotSyncBadge.className = 'sync-indicator ' + (manualLotEdit ? 'manual' : 'synced');
+            lotSyncBadge.innerHTML = manualLotEdit ? '↻ Manual (klik re-sync)' : '🔄 Synced';
+        }
+        function updateSLSyncBadge() {
+            slSyncBadge.className = 'sync-indicator ' + (manualSLPipsEdit ? 'manual' : 'synced');
+            slSyncBadge.innerHTML = manualSLPipsEdit ? '↻ Manual (klik re-sync)' : '🔄 Synced';
         }
 
-        function updateSLSyncBadge() {
-            if (manualSLPipsEdit) {
-                slSyncBadge.className = 'sync-indicator manual';
-                slSyncBadge.innerHTML = '↻ Manual (klik re-sync)';
-            } else {
-                slSyncBadge.className = 'sync-indicator synced';
-                slSyncBadge.innerHTML = '🔄 Synced';
+        function applyPairDefaults() {
+            const pair = pairSelect.value;
+            if (pair === 'XAUUSD') {
+                pointSizeInput.value = '0.01';
+                pointPerPipInput.value = '10';
+            } else if (pair === 'AUDUSD') {
+                pointSizeInput.value = '0.00001';
+                pointPerPipInput.value = '10';
             }
+            if (!manualSLPipsEdit) updateFibonacci();
+            else calculateSection1();
+        }
+
+        function updateAccountTypeUI() {
+            const isNoCom = accountTypeSelect.value === 'nocommission';
+            targetNetRRGroup.classList.toggle('disabled-input', isNoCom);
+            if (isNoCom) {
+                targetNetRRInput.value = '0'; // tidak digunakan
+            }
+            // Trigger recalc
+            calculateSection2();
+            updateFibonacci();
         }
 
         function computeVisualRR(lot, slPips, komisiRate, targetNetRR) {
@@ -316,14 +326,29 @@
             const lot = safeFloat(lotSizeInput.value);
             const slPips = safeFloat(slPipsInput.value);
             const komisiRate = safeFloat(komisiRateInput.value);
-            const targetNetRR = safeFloat(targetNetRRInput.value);
+            const isNoCom = accountTypeSelect.value === 'nocommission';
+            const targetNetRR = isNoCom ? 0 : safeFloat(targetNetRRInput.value);
+
             const lossKotor = lot * slPips * 10;
             const totalKomisi = lot * komisiRate;
             const lossBersih = lossKotor + totalKomisi;
-            const profitBersih = lossBersih * targetNetRR;
-            const profitKotor = profitBersih + totalKomisi;
-            let rrVisual = 0;
-            if (lossKotor > 0 && isFinite(lossKotor)) rrVisual = profitKotor / lossKotor;
+
+            let profitBersih = 0, profitKotor = 0, rrVisual = 0;
+            if (isNoCom) {
+                // Untuk akun tanpa komisi, profit kotor = lot * tpPips * 10, profit bersih = profit kotor (karena komisi tetap dihitung? 
+                // User mau tanpa komisi, jadi komisi harus 0, kita akan set komisi = 0 dari input? Biarkan input, tapi perhitungan profit bersih = profit kotor.
+                // Maka di sini kita abaikan komisi untuk profit bersih.
+                const tpPips = getTPPipsFromFibo(); // akan dihitung dari updateFibonacci
+                profitKotor = lot * tpPips * 10;
+                profitBersih = profitKotor; // tanpa komisi
+                if (lossKotor > 0) rrVisual = profitKotor / lossKotor;
+            } else {
+                if (lossKotor > 0) {
+                    profitBersih = lossBersih * targetNetRR;
+                    profitKotor = profitBersih + totalKomisi;
+                    rrVisual = profitKotor / lossKotor;
+                }
+            }
 
             lossKotorDisplay.textContent = fmt$(lossKotor);
             totalKomisiDisplay.textContent = fmt$(totalKomisi);
@@ -333,25 +358,38 @@
             rrVisualFinalDisplay.textContent = (lossKotor > 0 && rrVisual > 0) ? fmtRR(rrVisual) : '1 : —';
         }
 
+        function getTPPipsFromFibo() {
+            // Helper untuk mendapatkan tpPips berdasarkan Fibonacci tanpa komisi
+            const high = safeFloat(fibHighInput.value);
+            const low = safeFloat(fibLowInput.value);
+            const range = high - low;
+            if (range <= 0) return 0;
+            const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
+            const tpPrice = currentTradeSide === 'buy' ? low + range * FIB_TP_NOCOM : high - range * FIB_TP_NOCOM;
+            const tpDistance = Math.abs(tpPrice - entryPrice);
+            const pointSize = safeFloat(pointSizeInput.value) || 0.01;
+            const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
+            const tpPoints = tpDistance / pointSize;
+            return tpPoints / pointPerPip;
+        }
+
         function calculateSection1() {
             const balance = safeFloat(balanceInput.value);
             const riskPct = safeFloat(riskPercentInput.value);
             const slPips = safeFloat(slPipsInput.value);
-            const riskAmount = balance * (riskPct / 100);
+            const riskAmount = balance * (riskPct/100);
             let recLot = 0;
             if (slPips > 0) recLot = riskAmount / (slPips * 10);
 
             riskAmountDisplay.textContent = fmt$(riskAmount);
-            recommendedLotDisplay.textContent = slPips > 0 ? fmtLot(recLot) : '0.00 Lots';
+            recommendedLotDisplay.textContent = slPips>0 ? fmtLot(recLot) : '0.00 Lots';
 
-            // Sync lot to Section 2 (only if not manual and not updating from Fibonacci)
             if (!manualLotEdit && !isUpdatingFromFib) {
                 if (recLot > 0 && slPips > 0) {
                     lotSizeInput.value = recLot.toFixed(2);
                     updateLotSyncBadge();
                 }
             }
-
             calculateSection2();
             if (!isUpdatingFromFib) updateFibonacci();
         }
@@ -370,19 +408,21 @@
                 return;
             }
 
+            const pointSize = safeFloat(pointSizeInput.value) || 0.01;
+            const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
             let entryPrice, slPrice;
             if (currentTradeSide === 'buy') {
-                entryPrice = high - (range * FIB_LEVEL);
+                entryPrice = high - (range * FIB_ENTRY);
                 slPrice = low;
             } else {
-                entryPrice = low + (range * FIB_LEVEL);
+                entryPrice = low + (range * FIB_ENTRY);
                 slPrice = high;
             }
 
             const slDistance = Math.abs(entryPrice - slPrice);
-            const slPips = slDistance / PIP_SIZE;   // 10 point = 1 pip sudah terpenuhi
+            const slPoints = slDistance / pointSize;
+            const slPips = slPoints / pointPerPip;
 
-            // Sync SL pips ke Seksi 1 (jika tidak manual)
             if (!manualSLPipsEdit) {
                 slPipsInput.value = slPips.toFixed(1);
                 updateSLSyncBadge();
@@ -390,117 +430,103 @@
 
             const balance = safeFloat(balanceInput.value);
             const riskPct = safeFloat(riskPercentInput.value);
-            const riskAmount = balance * (riskPct / 100);
+            const riskAmount = balance * (riskPct/100);
             let fibLot = 0;
             if (slPips > 0) fibLot = riskAmount / (slPips * 10);
             fibLot = Math.max(0, fibLot);
 
-            const komisiRate = safeFloat(komisiRateInput.value);
-            const targetNetRR = safeFloat(targetNetRRInput.value);
-            const visualRR = computeVisualRR(fibLot, slPips, komisiRate, targetNetRR);
-            const tpPips = slPips * visualRR;
-            let tpPrice;
-            if (currentTradeSide === 'buy') {
-                tpPrice = entryPrice + tpPips * PIP_SIZE;
+            const isNoCom = accountTypeSelect.value === 'nocommission';
+            let tpPips = 0, tpPrice = 0, netProfit = 0;
+            if (isNoCom) {
+                // TP dari level 1.15
+                tpPrice = currentTradeSide === 'buy' ? low + range * FIB_TP_NOCOM : high - range * FIB_TP_NOCOM;
+                const tpDistance = Math.abs(tpPrice - entryPrice);
+                const tpPoints = tpDistance / pointSize;
+                tpPips = tpPoints / pointPerPip;
+                const profitKotor = fibLot * tpPips * 10;
+                netProfit = profitKotor; // tanpa komisi
             } else {
-                tpPrice = entryPrice - tpPips * PIP_SIZE;
+                const komisiRate = safeFloat(komisiRateInput.value);
+                const targetNetRR = safeFloat(targetNetRRInput.value);
+                const visualRR = computeVisualRR(fibLot, slPips, komisiRate, targetNetRR);
+                tpPips = slPips * visualRR;
+                const tpMove = tpPips * pointPerPip * pointSize;
+                tpPrice = currentTradeSide === 'buy' ? entryPrice + tpMove : entryPrice - tpMove;
+                const lossKotor = fibLot * slPips * 10;
+                const totalKomisi = fibLot * komisiRate;
+                const lossBersih = lossKotor + totalKomisi;
+                netProfit = lossBersih * targetNetRR;
             }
-
-            const lossKotor = fibLot * slPips * 10;
-            const totalKomisi = fibLot * komisiRate;
-            const lossBersih = lossKotor + totalKomisi;
-            const netProfit = lossBersih * targetNetRR;
 
             fibEntryDisplay.textContent = entryPrice.toFixed(5);
             fibTPDisplay.textContent = tpPrice.toFixed(5);
             fibLotDisplay.textContent = fibLot.toFixed(2);
             fibNetProfitDisplay.textContent = fmt$(netProfit);
 
-            // Sync Fibonacci lot ke Seksi 2 (jika tidak manual)
             if (!manualLotEdit && fibLot > 0) {
                 lotSizeInput.value = fibLot.toFixed(2);
                 updateLotSyncBadge();
             }
 
-            // Recalculate Section 2 dengan lot/SL terbaru
             calculateSection2();
             isUpdatingFromFib = false;
         }
 
-        // Event listeners for manual SL input
+        // Event listeners
+        pairSelect.addEventListener('change', applyPairDefaults);
+        accountTypeSelect.addEventListener('change', updateAccountTypeUI);
+
+        pointSizeInput.addEventListener('input', function() {
+            if (!manualSLPipsEdit) updateFibonacci();
+            else calculateSection1();
+        });
+        pointPerPipInput.addEventListener('input', function() {
+            if (!manualSLPipsEdit) updateFibonacci();
+            else calculateSection1();
+        });
         slPipsInput.addEventListener('input', function() {
-            if (!isUpdatingFromFib) {
-                manualSLPipsEdit = true;
-                updateSLSyncBadge();
-            }
+            if (!isUpdatingFromFib) { manualSLPipsEdit = true; updateSLSyncBadge(); }
             calculateSection1();
         });
-
-        // SL badge re-sync
         slSyncBadge.addEventListener('click', function() {
-            if (manualSLPipsEdit) {
-                manualSLPipsEdit = false;
-                updateSLSyncBadge();
-                // Trigger sync dari Fibonacci (akan update slPipsInput)
-                updateFibonacci();
-            }
+            if (manualSLPipsEdit) { manualSLPipsEdit = false; updateSLSyncBadge(); updateFibonacci(); }
         });
-
-        // Lot badge re-sync
         lotSyncBadge.addEventListener('click', function() {
             if (manualLotEdit) {
-                manualLotEdit = false;
-                updateLotSyncBadge();
-                const high = safeFloat(fibHighInput.value);
-                const low = safeFloat(fibLowInput.value);
-                if ((high - low) > 0 && isFinite(high) && isFinite(low)) {
-                    updateFibonacci();
-                } else {
-                    calculateSection1();
-                }
+                manualLotEdit = false; updateLotSyncBadge();
+                const high = safeFloat(fibHighInput.value), low = safeFloat(fibLowInput.value);
+                if ((high-low)>0 && isFinite(high) && isFinite(low)) updateFibonacci();
+                else calculateSection1();
             }
         });
-
-        // Side toggle
         sideButtons.forEach(btn => {
             btn.addEventListener('click', function() {
-                sideButtons.forEach(b => b.classList.remove('active-buy', 'active-sell'));
-                const side = this.dataset.side;
-                currentTradeSide = side;
-                this.classList.add(side === 'buy' ? 'active-buy' : 'active-sell');
+                sideButtons.forEach(b => b.classList.remove('active-buy','active-sell'));
+                currentTradeSide = this.dataset.side;
+                this.classList.add(currentTradeSide==='buy'?'active-buy':'active-sell');
                 updateFibonacci();
             });
         });
-
-        // Other inputs
         balanceInput.addEventListener('input', calculateSection1);
         riskPercentInput.addEventListener('input', calculateSection1);
         lotSizeInput.addEventListener('input', function() {
-            if (!isUpdatingFromFib) {
-                manualLotEdit = true;
-                updateLotSyncBadge();
-            }
+            if (!isUpdatingFromFib) { manualLotEdit = true; updateLotSyncBadge(); }
             calculateSection2();
             if (!isUpdatingFromFib) updateFibonacci();
         });
-        komisiRateInput.addEventListener('input', function() {
-            calculateSection2();
-            updateFibonacci();
-        });
-        targetNetRRInput.addEventListener('input', function() {
-            calculateSection2();
-            updateFibonacci();
-        });
+        komisiRateInput.addEventListener('input', function() { calculateSection2(); updateFibonacci(); });
+        targetNetRRInput.addEventListener('input', function() { calculateSection2(); updateFibonacci(); });
         fibHighInput.addEventListener('input', updateFibonacci);
         fibLowInput.addEventListener('input', updateFibonacci);
 
-        // Initial run
+        // Initial
         function initialize() {
             manualLotEdit = false;
             manualSLPipsEdit = false;
             updateLotSyncBadge();
             updateSLSyncBadge();
-            calculateSection1();   // will also call updateFibonacci
+            applyPairDefaults();
+            updateAccountTypeUI(); // set UI awal
         }
         initialize();
     })();
