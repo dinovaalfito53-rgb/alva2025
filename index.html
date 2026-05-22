@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Calculator — Lot Selalu Sinkron</title>
+    <title>Trading Calculator — Fix Tanpa Komisi & Lot Sinkron</title>
     <style>
         :root {
             --bg: #0d1117;
@@ -44,7 +44,7 @@
         .header h1 { font-size:1.55rem; font-weight:700; }
         .header .subtitle { font-size:0.85rem; color:var(--text-secondary); margin-top:2px; }
         .sections-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-        @media (max-width:720px) { .sections-grid { grid-template-columns:1fr; } .header h1 { font-size:1.35rem; } }
+        @media (max-width:720px) { .sections-grid { grid-template-columns:1fr; } }
         .card {
             background:var(--card-bg); border:1px solid var(--card-border);
             border-radius:var(--radius-lg); padding:22px 20px 18px;
@@ -104,7 +104,7 @@
     <div class="header">
         <span class="logo-icon">📊</span>
         <h1>Trading System Calculator</h1>
-        <p class="subtitle">XAUUSD & AUDUSD • Lot Selalu Sinkron</p>
+        <p class="subtitle">XAUUSD & AUDUSD • Tanpa Komisi = Komisi 0 & Lot Sinkron</p>
     </div>
 
     <div class="sections-grid">
@@ -176,7 +176,7 @@
                 <label>📦 Ukuran Lot <span class="sync-indicator synced" id="lotSyncBadge">🔄 Synced</span></label>
                 <div class="input-wrapper"><input type="number" id="lotSize" value="0.20" min="0.01" step="0.01"><span class="input-suffix">Lots</span></div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="komisiGroup">
                 <label>💳 Tarif Komisi Broker</label>
                 <div class="input-wrapper"><input type="number" id="komisiRate" value="6" min="0" step="0.5"><span class="input-suffix">$/Lot RT</span></div>
             </div>
@@ -251,6 +251,7 @@
         const komisiRateInput = document.getElementById('komisiRate');
         const targetNetRRInput = document.getElementById('targetNetRR');
         const targetNetRRGroup = document.getElementById('targetNetRRGroup');
+        const komisiGroup = document.getElementById('komisiGroup');
         const lossKotorDisplay = document.getElementById('lossKotor');
         const totalKomisiDisplay = document.getElementById('totalKomisi');
         const lossBersihDisplay = document.getElementById('lossBersih');
@@ -304,7 +305,17 @@
         function updateAccountTypeUI() {
             const isNoCom = accountTypeSelect.value === 'nocommission';
             targetNetRRGroup.classList.toggle('disabled-input', isNoCom);
-            if (isNoCom) targetNetRRInput.value = '0';
+            komisiGroup.classList.toggle('disabled-input', isNoCom);
+            if (isNoCom) {
+                targetNetRRInput.value = '0';
+                komisiRateInput.value = '0';
+                // Paksa sinkronisasi lot dari Fibonacci agar loss kotor = risk amount
+                if (manualLotEdit) {
+                    manualLotEdit = false;
+                    updateLotSyncBadge();
+                }
+            }
+            // Trigger recalculation
             calculateSection2();
             updateFibonacci();
         }
@@ -322,22 +333,22 @@
         function calculateSection2() {
             const lot = safeFloat(lotSizeInput.value);
             const slPips = safeFloat(slPipsInput.value);
-            const komisiRate = safeFloat(komisiRateInput.value);
             const isNoCom = accountTypeSelect.value === 'nocommission';
+            const komisiRate = isNoCom ? 0 : safeFloat(komisiRateInput.value);
             const targetNetRR = isNoCom ? 0 : safeFloat(targetNetRRInput.value);
 
             const lossKotor = lot * slPips * 10;
             const totalKomisi = lot * komisiRate;
-            const lossBersih = lossKotor + totalKomisi;
+            const lossBersih = isNoCom ? lossKotor : (lossKotor + totalKomisi);
             let profitBersih = 0, profitKotor = 0, rrVisual = 0;
 
             if (isNoCom) {
                 const tpPips = getTPPipsFromFibo();
                 profitKotor = lot * tpPips * 10;
-                profitBersih = profitKotor;
+                profitBersih = profitKotor;  // tanpa komisi
                 if (lossKotor > 0) rrVisual = profitKotor / lossKotor;
             } else {
-                if (lossKotor > 0) {
+                if (lossKotor > 0 && targetNetRR > 0) {
                     profitBersih = lossBersih * targetNetRR;
                     profitKotor = profitBersih + totalKomisi;
                     rrVisual = profitKotor / lossKotor;
@@ -346,6 +357,7 @@
 
             lossKotorDisplay.textContent = fmt$(lossKotor);
             totalKomisiDisplay.textContent = fmt$(totalKomisi);
+            totalKomisiDisplay.style.color = totalKomisi === 0 ? 'var(--text-muted)' : '#d2991d';
             lossBersihDisplay.textContent = fmt$(lossBersih);
             profitBersihDisplay.textContent = fmt$(profitBersih);
             profitKotorDisplay.textContent = fmt$(profitKotor);
@@ -371,25 +383,26 @@
             const riskPct = safeFloat(riskPercentInput.value);
             const slPips = safeFloat(slPipsInput.value);
             const riskAmount = balance * (riskPct/100);
-            let recLot = 0;
-            if (slPips > 0) recLot = riskAmount / (slPips * 10);
-
             riskAmountDisplay.textContent = fmt$(riskAmount);
 
-            // ** PERBAIKAN UTAMA: Selalu gunakan nilai lot dari Fibonacci jika tersedia **
+            // Rekomendasi Lot selalu mengikuti lot dari Fibonacci (jika ada)
             const fibLotValue = safeFloat(fibLotDisplay.textContent);
             if (fibLotValue > 0 && !isUpdatingFromFib) {
                 recommendedLotDisplay.textContent = fmtLot(fibLotValue);
             } else {
-                recommendedLotDisplay.textContent = slPips > 0 ? fmtLot(recLot) : '0.00 Lots';
+                const recLot = slPips > 0 ? riskAmount / (slPips * 10) : 0;
+                recommendedLotDisplay.textContent = fmtLot(recLot);
             }
 
+            // Sinkron lot ke Seksi 2 jika tidak manual
             if (!manualLotEdit && !isUpdatingFromFib) {
-                if (recLot > 0 && slPips > 0) {
-                    lotSizeInput.value = recLot.toFixed(2);
+                const lotToSync = safeFloat(fibLotDisplay.textContent) || (slPips > 0 ? riskAmount / (slPips * 10) : 0);
+                if (lotToSync > 0) {
+                    lotSizeInput.value = lotToSync.toFixed(2);
                     updateLotSyncBadge();
                 }
             }
+
             calculateSection2();
             if (!isUpdatingFromFib) updateFibonacci();
         }
@@ -443,7 +456,7 @@
                 const tpPoints = tpDistance / pointSize;
                 tpPips = tpPoints / pointPerPip;
                 const profitKotor = fibLot * tpPips * 10;
-                netProfit = profitKotor;
+                netProfit = profitKotor; // tanpa komisi
             } else {
                 const komisiRate = safeFloat(komisiRateInput.value);
                 const targetNetRR = safeFloat(targetNetRRInput.value);
@@ -462,12 +475,16 @@
             fibLotDisplay.textContent = fibLot.toFixed(2);
             fibNetProfitDisplay.textContent = fmt$(netProfit);
 
-            // ** Sinkronisasi lot ke Seksi 1 **
+            // Update Rekomendasi Lot di Seksi 1
             recommendedLotDisplay.textContent = fmtLot(fibLot);
 
-            if (!manualLotEdit && fibLot > 0) {
+            // Sinkron lot ke Seksi 2 (jika tidak manual atau akun tanpa komisi)
+            if (!manualLotEdit || isNoCom) {
                 lotSizeInput.value = fibLot.toFixed(2);
-                updateLotSyncBadge();
+                if (manualLotEdit) { // hanya jika tadinya manual dan sekarang akun tanpa komisi
+                    manualLotEdit = false;
+                    updateLotSyncBadge();
+                }
             }
 
             calculateSection2();
@@ -477,6 +494,7 @@
         // Event listeners
         pairSelect.addEventListener('change', applyPairDefaults);
         accountTypeSelect.addEventListener('change', updateAccountTypeUI);
+
         pointSizeInput.addEventListener('input', function() {
             if (!manualSLPipsEdit) updateFibonacci();
             else calculateSection1();
@@ -515,7 +533,14 @@
             calculateSection2();
             if (!isUpdatingFromFib) updateFibonacci();
         });
-        komisiRateInput.addEventListener('input', function() { calculateSection2(); updateFibonacci(); });
+        komisiRateInput.addEventListener('input', function() {
+            // Jika tanpa komisi, abaikan input (tetap 0)
+            if (accountTypeSelect.value === 'nocommission') {
+                komisiRateInput.value = '0';
+            }
+            calculateSection2();
+            updateFibonacci();
+        });
         targetNetRRInput.addEventListener('input', function() { calculateSection2(); updateFibonacci(); });
         fibHighInput.addEventListener('input', updateFibonacci);
         fibLowInput.addEventListener('input', updateFibonacci);
