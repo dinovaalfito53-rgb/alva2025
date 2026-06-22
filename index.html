@@ -108,7 +108,6 @@
     </div>
 
     <div class="sections-grid">
-        <!-- SECTION 1: Lot Size Calculator -->
         <div class="card card-lot">
             <div class="card-header">
                 <div class="card-icon">🧮</div>
@@ -161,7 +160,6 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Net RR Adjuster -->
         <div class="card card-rr">
             <div class="card-header">
                 <div class="card-icon">📈</div>
@@ -184,10 +182,6 @@
                 <label>💳 Tarif Komisi Broker</label>
                 <div class="input-wrapper"><input type="number" id="komisiRate" value="7" min="0" step="0.5"><span class="input-suffix">$/Lot RT</span></div>
             </div>
-            <div class="form-group" id="targetNetRRGroup">
-                <label>🎯 Target Net RR (1 : X)</label>
-                <div class="input-wrapper"><input type="number" id="targetNetRR" value="2.5" min="0.1" step="0.1"><span class="input-suffix">Ratio</span></div>
-            </div>
             <hr class="divider">
             <div class="sub-outputs">
                 <div class="sub-output"><div class="output-label">📉 Loss Kotor Chart</div><div class="output-value red" id="lossKotor">$0.00</div></div>
@@ -203,7 +197,6 @@
         </div>
     </div>
 
-    <!-- SECTION 3: Fibonacci Entry Signal -->
     <div class="card card-fib">
         <div class="card-header">
             <div class="card-icon">🔮</div>
@@ -255,8 +248,6 @@
         const accountTypeSelect = document.getElementById('accountType');
         const lotSizeInput = document.getElementById('lotSize');
         const komisiRateInput = document.getElementById('komisiRate');
-        const targetNetRRInput = document.getElementById('targetNetRR');
-        const targetNetRRGroup = document.getElementById('targetNetRRGroup');
         const komisiGroup = document.getElementById('komisiGroup');
         const lossKotorDisplay = document.getElementById('lossKotor');
         const totalKomisiDisplay = document.getElementById('totalKomisi');
@@ -310,10 +301,8 @@
 
         function updateAccountTypeUI() {
             const isNoCom = accountTypeSelect.value === 'nocommission';
-            targetNetRRGroup.classList.toggle('disabled-input', isNoCom);
             komisiGroup.classList.toggle('disabled-input', isNoCom);
             if (isNoCom) {
-                targetNetRRInput.value = '0';
                 komisiRateInput.value = '0';
                 if (manualLotEdit) {
                     manualLotEdit = false;
@@ -352,10 +341,12 @@
             const riskAmount = balance * (riskPct / 100);
             riskAmountDisplay.textContent = fmt$(riskAmount);
 
-            // 3. LOGIKA BARU: HITUNG LOT PRESISI INCLUDE KOMISI
+            // 3. HITUNG LOT PRESISI INCLUDE KOMISI
             const isNoCom = accountTypeSelect.value === 'nocommission';
             const komisiRate = isNoCom ? 0 : safeFloat(komisiRateInput.value);
-            const targetNetRR = isNoCom ? 0 : safeFloat(targetNetRRInput.value);
+            
+            // Kunci Target Net RR selalu ke angka 0 sesuai permintaan
+            const targetNetRR = 0;
 
             // Faktor pengali pip value per lot (standar broker forex/gold $10 per lot per 1 pip)
             const pipValuePerLot = 10; 
@@ -390,7 +381,7 @@
             // 4. Hitung Keuangan Rill & Target Profit Berdasarkan Lot Terpasang
             const lossKotor = lotUsed * currentSLPips * pipValuePerLot;
             const totalKomisi = lotUsed * komisiRate;
-            const lossBersih = lossKotor + totalKomisi; // NET RISK REAL AKUN LU
+            const lossBersih = lossKotor + totalKomisi; // NET RISK REAL AKUN
 
             let profitBersih = 0;
             let profitKotor = 0;
@@ -411,22 +402,20 @@
                 profitBersih = profitKotor;
                 rrVisual = lossKotor > 0 ? profitKotor / lossKotor : 0;
             } else {
-                // Jika Menggunakan Komisi
-                if (lossKotor > 0 && targetNetRR > 0) {
-                    profitBersih = lossBersih * targetNetRR; // Profit bersih dicari sesuai target RRR
-                    profitKotor = profitBersih + totalKomisi; // Profit kotor yang harus dikejar di chart
-                    rrVisual = profitKotor / lossKotor; // RR Visual chart yang wajib dipasang
+                // Jika Menggunakan Komisi (Net RR = 0)
+                profitBersih = lossBersih * targetNetRR; // Selalu $0.00 karena dikali 0
+                profitKotor = profitBersih + totalKomisi; // Murni menghitung beban biaya keluar masuk pasar
+                rrVisual = lossKotor > 0 ? profitKotor / lossKotor : 0; // RR visual penyeimbang komisi di chart
+                
+                if (range > 0) {
+                    const pointSize = safeFloat(pointSizeInput.value) || 0.01;
+                    const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
+                    const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
+                    const tpPips = currentSLPips * rrVisual;
                     
-                    if (range > 0) {
-                        const pointSize = safeFloat(pointSizeInput.value) || 0.01;
-                        const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
-                        const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
-                        const tpPips = currentSLPips * rrVisual;
-                        
-                        tpPrice = currentTradeSide === 'buy' ? 
-                            entryPrice + (tpPips * pointPerPip * pointSize) : 
-                            entryPrice - (tpPips * pointPerPip * pointSize);
-                    }
+                    tpPrice = currentTradeSide === 'buy' ? 
+                        entryPrice + (tpPips * pointPerPip * pointSize) : 
+                        entryPrice - (tpPips * pointPerPip * pointSize);
                 }
             }
 
@@ -437,7 +426,7 @@
             lossBersihDisplay.textContent = fmt$(lossBersih);
             profitBersihDisplay.textContent = fmt$(profitBersih);
             profitKotorDisplay.textContent = fmt$(profitKotor);
-            rrVisualFinalDisplay.textContent = (lossKotor > 0 && rrVisual > 0) ? fmtRR(rrVisual) : '1 : —';
+            rrVisualFinalDisplay.textContent = (lossKotor > 0 && rrVisual > 0) ? fmtRR(rrVisual) : '1 : 0.00';
 
             // Update Tampilan Data Fibonacci Section 3
             if (range > 0) {
@@ -492,7 +481,6 @@
             calculateAll();
         });
         komisiRateInput.addEventListener('input', calculateAll);
-        targetNetRRInput.addEventListener('input', calculateAll);
         fibHighInput.addEventListener('input', calculateAll);
         fibLowInput.addEventListener('input', calculateAll);
 
