@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Calculator — Lot Presisi & Lot Bulat</title>
+    <title>Trading Calculator — Lot Presisi Include Komisi</title>
     <style>
         :root {
             --bg: #0d1117;
@@ -125,17 +125,17 @@
             </div>
             <div class="form-group">
                 <label>💰 Account Balance</label>
-                <div class="input-wrapper"><input type="number" id="balance" value="321.15" min="0" step="100"><span class="input-suffix">$</span></div>
+                <div class="input-wrapper"><input type="number" id="balance" value="5000" min="0" step="100"><span class="input-suffix">$</span></div>
             </div>
             <div class="form-group">
                 <label>⚠️ Risk Per Trade</label>
-                <div class="input-wrapper"><input type="number" id="riskPercent" value="10" min="0" step="0.1"><span class="input-suffix">%</span></div>
+                <div class="input-wrapper"><input type="number" id="riskPercent" value="0.5" min="0" step="0.1"><span class="input-suffix">%</span></div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="display:none;">
                 <label>🔹 Point Size</label>
                 <div class="input-wrapper"><input type="number" id="pointSize" value="0.01" min="0.000001" step="0.000001"><span class="input-suffix">harga</span></div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="display:none;">
                 <label>🔸 Point per Pip</label>
                 <div class="input-wrapper"><input type="number" id="pointPerPip" value="10" min="1" step="1"><span class="input-suffix">point</span></div>
             </div>
@@ -144,20 +144,20 @@
                     🎯 Jarak Stop Loss
                     <span class="sync-indicator synced" id="slSyncBadge">🔄 Synced</span>
                 </label>
-                <div class="input-wrapper"><input type="number" id="slPips" value="178.2" min="0.1" step="0.1"><span class="input-suffix">Pips</span></div>
+                <div class="input-wrapper"><input type="number" id="slPips" value="3.6" min="0.1" step="0.1"><span class="input-suffix">Pips</span></div>
             </div>
             <hr class="divider">
             <div class="output-block highlight">
-                <div class="output-label">💸 Nominal Uang Diresikokan</div>
-                <div class="output-value red" id="riskAmount">$32.12</div>
+                <div class="output-label">💸 Nominal Uang Diresikokan (Max Limit)</div>
+                <div class="output-value red" id="riskAmount">$25.00</div>
             </div>
             <div class="output-block highlight" style="margin-top:8px;">
-                <div class="output-label">📐 Lot Presisi (Asli)</div>
-                <div class="output-value accent-lot" id="preciseLotDisplay">0.0180</div>
+                <div class="output-label">📐 Lot Presisi Include Komisi</div>
+                <div class="output-value accent-lot" id="preciseLotDisplay">0.0000</div>
             </div>
             <div class="output-block highlight" style="margin-top:8px;">
-                <div class="output-label">📐 Lot Dibulatkan (Trading)</div>
-                <div class="output-value accent-lot" id="roundedLotDisplay">0.02</div>
+                <div class="output-label">📐 Lot Dibulatkan Ke Bawah (Aman)</div>
+                <div class="output-value accent-lot" id="roundedLotDisplay">0.00</div>
             </div>
         </div>
 
@@ -171,34 +171,34 @@
                 <label>🏦 Tipe Akun</label>
                 <div class="input-wrapper">
                     <select id="accountType">
-                        <option value="commission">Dengan Komisi</option>
-                        <option value="nocommission" selected>Tanpa Komisi (TP Fibo 1.15)</option>
+                        <option value="commission" selected>Dengan Komisi</option>
+                        <option value="nocommission">Tanpa Komisi (TP Fibo 1.15)</option>
                     </select>
                 </div>
             </div>
             <div class="form-group">
                 <label>📦 Ukuran Lot <span class="sync-indicator synced" id="lotSyncBadge">🔄 Synced</span></label>
-                <div class="input-wrapper"><input type="number" id="lotSize" value="0.02" min="0.01" step="0.01"><span class="input-suffix">Lots</span></div>
+                <div class="input-wrapper"><input type="number" id="lotSize" value="0.00" min="0.01" step="0.01"><span class="input-suffix">Lots</span></div>
             </div>
             <div class="form-group" id="komisiGroup">
                 <label>💳 Tarif Komisi Broker</label>
-                <div class="input-wrapper"><input type="number" id="komisiRate" value="0" min="0" step="0.5"><span class="input-suffix">$/Lot RT</span></div>
+                <div class="input-wrapper"><input type="number" id="komisiRate" value="7" min="0" step="0.5"><span class="input-suffix">$/Lot RT</span></div>
             </div>
             <div class="form-group" id="targetNetRRGroup">
                 <label>🎯 Target Net RR (1 : X)</label>
-                <div class="input-wrapper"><input type="number" id="targetNetRR" value="0" min="0.1" step="0.1"><span class="input-suffix">Ratio</span></div>
+                <div class="input-wrapper"><input type="number" id="targetNetRR" value="2.5" min="0.1" step="0.1"><span class="input-suffix">Ratio</span></div>
             </div>
             <hr class="divider">
             <div class="sub-outputs">
-                <div class="sub-output"><div class="output-label">📉 Loss Kotor Chart</div><div class="output-value red" id="lossKotor">$35.64</div></div>
+                <div class="sub-output"><div class="output-label">📉 Loss Kotor Chart</div><div class="output-value red" id="lossKotor">$0.00</div></div>
                 <div class="sub-output"><div class="output-label">🧾 Total Beban Komisi</div><div class="output-value" id="totalKomisi" style="color:#d2991d;">$0.00</div></div>
             </div>
-            <div class="output-block"><div class="output-label">🔻 Loss Bersih (Net Risk)</div><div class="output-value red" id="lossBersih">$35.64</div></div>
-            <div class="output-block"><div class="output-label">🔺 Profit Bersih Dicari</div><div class="output-value green" id="profitBersih">$108.14</div></div>
-            <div class="sub-outputs"><div class="sub-output" style="grid-column:1/-1;"><div class="output-label">📊 Profit Kotor di Chart</div><div class="output-value green" id="profitKotor">$108.14</div></div></div>
+            <div class="output-block"><div class="output-label">🔻 Loss Bersih (Net Risk Real)</div><div class="output-value red" id="lossBersih">$0.00</div></div>
+            <div class="output-block"><div class="output-label">🔺 Profit Bersih Dicari</div><div class="output-value green" id="profitBersih">$0.00</div></div>
+            <div class="sub-outputs"><div class="sub-output" style="grid-column:1/-1;"><div class="output-label">📊 Profit Kotor di Chart</div><div class="output-value green" id="profitKotor">$0.00</div></div></div>
             <div class="output-block final-result">
                 <div class="output-label">🏁 Pasang RR Visual di Chart</div>
-                <div class="output-value" id="rrVisualFinal">1 : 3.03</div>
+                <div class="output-value" id="rrVisualFinal">1 : —</div>
             </div>
         </div>
     </div>
@@ -212,11 +212,11 @@
         <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end;">
             <div class="form-group" style="flex:1; min-width:120px;">
                 <label>📈 High Price</label>
-                <div class="input-wrapper"><input type="number" id="fibHigh" value="4559.17" step="0.01" min="0"><span class="input-suffix">Price</span></div>
+                <div class="input-wrapper"><input type="number" id="fibHigh" value="0.70121" step="0.00001" min="0"><span class="input-suffix">Price</span></div>
             </div>
             <div class="form-group" style="flex:1; min-width:120px;">
                 <label>📉 Low Price</label>
-                <div class="input-wrapper"><input type="number" id="fibLow" value="4496.66" step="0.01" min="0"><span class="input-suffix">Price</span></div>
+                <div class="input-wrapper"><input type="number" id="fibLow" value="0.69990" step="0.00001" min="0"><span class="input-suffix">Price</span></div>
             </div>
             <div class="form-group" style="flex:1; min-width:150px;">
                 <label>🔽🔼 Arah Trade</label>
@@ -229,18 +229,18 @@
         <div class="pip-note">📌 Entry: BUY=High-(Range×0.715) | SELL=Low+(Range×0.715). SL di Low/High.</div>
         <hr class="divider">
         <div class="sub-outputs" style="grid-template-columns: repeat(auto-fit, minmax(130px,1fr));">
-            <div class="sub-output"><div class="output-label">📍 Entry Price</div><div class="output-value purple" id="fibEntry">4514.47535</div></div>
-            <div class="sub-output"><div class="output-label">🎯 TP Price</div><div class="output-value green" id="fibTP">4568.54650</div></div>
-            <div class="sub-output"><div class="output-label">📐 Lot (dari risiko)</div><div class="output-value accent-lot" id="fibLot">0.02</div></div>
-            <div class="sub-output"><div class="output-label">💵 Net Profit ($)</div><div class="output-value green" id="fibNetProfit">$108.14</div></div>
+            <div class="sub-output"><div class="output-label">📍 Entry Price</div><div class="output-value purple" id="fibEntry">0.00000</div></div>
+            <div class="sub-output"><div class="output-label">🎯 TP Price</div><div class="output-value green" id="fibTP">0.00000</div></div>
+            <div class="sub-output"><div class="output-label">📐 Lot (dari risiko)</div><div class="output-value accent-lot" id="fibLot">0.00</div></div>
+            <div class="sub-output"><div class="output-label">💵 Net Profit ($)</div><div class="output-value green" id="fibNetProfit">$0.00</div></div>
         </div>
-        <div class="pip-note" style="text-align:left; margin-top:6px;">ℹ️ Lot presisi asli: <span id="fibPreciseNote">0.0180</span> (dibulatkan ke 0.02 untuk trading)</div>
+        <div class="pip-note" style="text-align:left; margin-top:6px;">ℹ️ Lot presisi asli: <span id="fibPreciseNote">0.0000</span> (Dibulatkan ke bawah agar net risk tidak bocor)</div>
     </div>
 </div>
 
 <script>
     (function() {
-        // DOM
+        // DOM Elements
         const pairSelect = document.getElementById('pairSelect');
         const balanceInput = document.getElementById('balance');
         const riskPercentInput = document.getElementById('riskPercent');
@@ -280,15 +280,11 @@
         let manualLotEdit = false;
         let manualSLPipsEdit = false;
         let currentTradeSide = 'buy';
-        let isUpdatingFromFib = false;
 
         const safeFloat = v => { let n = parseFloat(v); return isNaN(n)||!isFinite(n)?0:n; };
         const fmt$ = n => '$'+n.toFixed(2);
         const fmtLotPrecise = n => n.toFixed(4);
-        const fmtLotRounded = n => {
-            // Bulatkan ke 0.01 (2 desimal)
-            return (Math.round(n * 100) / 100).toFixed(2);
-        };
+        const fmtLotRounded = n => n.toFixed(2);
         const fmtRR = n => '1 : '+n.toFixed(2);
 
         function updateLotSyncBadge() {
@@ -327,22 +323,13 @@
             calculateAll();
         }
 
-        function computeVisualRR(lot, slPips, komisiRate, targetNetRR) {
-            const lossKotor = lot * slPips * 10;
-            const totalKomisi = lot * komisiRate;
-            const lossBersih = lossKotor + totalKomisi;
-            if (lossKotor <= 0) return 0;
-            const profitBersih = lossBersih * targetNetRR;
-            const profitKotor = profitBersih + totalKomisi;
-            return profitKotor / lossKotor;
-        }
-
         function calculateAll() {
-            // Ambil data High/Low untuk SL pips jika memungkinkan
+            // 1. Ambil Data Dasar dari Struktur Fibonacci
             const high = safeFloat(fibHighInput.value);
             const low = safeFloat(fibLowInput.value);
             const range = high - low;
             let slPipsFromFib = null;
+
             if (range > 0) {
                 const pointSize = safeFloat(pointSizeInput.value) || 0.01;
                 const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
@@ -352,105 +339,98 @@
                 slPipsFromFib = (slDistance / pointSize) / pointPerPip;
             }
 
-            // Tentukan SL pips yang digunakan
+            // Tentukan Jarak SL yang akan dieksekusi di kalkulator
             const currentSLPips = manualSLPipsEdit ? safeFloat(slPipsInput.value) : (slPipsFromFib || safeFloat(slPipsInput.value));
             if (!manualSLPipsEdit && slPipsFromFib !== null) {
                 slPipsInput.value = slPipsFromFib.toFixed(1);
                 updateSLSyncBadge();
             }
 
-            // Risk Amount
+            // 2. Tentukan Angka Batas Risiko Nominal Maksimal Uang (SOP)
             const balance = safeFloat(balanceInput.value);
             const riskPct = safeFloat(riskPercentInput.value);
             const riskAmount = balance * (riskPct / 100);
             riskAmountDisplay.textContent = fmt$(riskAmount);
 
-            // Lot presisi (ideal)
-            const preciseLot = currentSLPips > 0 ? riskAmount / (currentSLPips * 10) : 0;
-            // Lot bulat (untuk trading)
-            const roundedLot = Math.round(preciseLot * 100) / 100; // 2 desimal
+            // 3. LOGIKA BARU: HITUNG LOT PRESISI INCLUDE KOMISI
+            const isNoCom = accountTypeSelect.value === 'nocommission';
+            const komisiRate = isNoCom ? 0 : safeFloat(komisiRateInput.value);
+            const targetNetRR = isNoCom ? 0 : safeFloat(targetNetRRInput.value);
+
+            // Faktor pengali pip value per lot (standar broker forex/gold $10 per lot per 1 pip)
+            const pipValuePerLot = 10; 
+
+            let preciseLot = 0;
+            if (currentSLPips > 0) {
+                // RUMUS UTAMA: Risk / (Jarak SL * 10 + Biaya Komisi)
+                preciseLot = riskAmount / ((currentSLPips * pipValuePerLot) + komisiRate);
+            }
+
+            // BULATKAN KE BAWAH (Math.floor) biar resiko real murni di bawah atau pas 0.5% (SOP Aman)
+            let roundedLot = Math.floor(preciseLot * 100) / 100;
+            if (roundedLot < 0.01 && preciseLot >= 0.005) {
+                roundedLot = 0.01; // Batas minimal lot trading broker
+            }
 
             preciseLotDisplay.textContent = fmtLotPrecise(preciseLot);
             roundedLotDisplay.textContent = fmtLotRounded(roundedLot);
 
-            // Update Fibonacci lot display & catatan
+            // Sinkronisasi data Lot ke seksi Fibonacci & Output Seksi 2
             fibLotDisplay.textContent = fmtLotRounded(roundedLot);
             fibPreciseNote.textContent = fmtLotPrecise(preciseLot);
 
-            // Sinkronkan Ukuran Lot di Seksi 2 ke lot bulat jika tidak manual
             if (!manualLotEdit) {
                 lotSizeInput.value = roundedLot.toFixed(2);
                 updateLotSyncBadge();
             }
 
-            // Hitung Fibonacci TP & Net Profit menggunakan lot bulat
-            if (range > 0) {
-                const pointSize = safeFloat(pointSizeInput.value) || 0.01;
-                const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
-                const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
-                let tpPrice = 0, netProfit = 0;
-                const isNoCom = accountTypeSelect.value === 'nocommission';
-                if (isNoCom) {
-                    tpPrice = currentTradeSide === 'buy' ? low + range * FIB_TP_NOCOM : high - range * FIB_TP_NOCOM;
-                    const tpDistance = Math.abs(tpPrice - entryPrice);
-                    const tpPips = (tpDistance / pointSize) / pointPerPip;
-                    const profitKotor = roundedLot * tpPips * 10;
-                    netProfit = profitKotor;
-                } else {
-                    const komisiRate = safeFloat(komisiRateInput.value);
-                    const targetNetRR = safeFloat(targetNetRRInput.value);
-                    const visualRR = computeVisualRR(roundedLot, currentSLPips, komisiRate, targetNetRR);
-                    const tpPips = currentSLPips * visualRR;
-                    tpPrice = currentTradeSide === 'buy' ? entryPrice + tpPips * pointPerPip * pointSize : entryPrice - tpPips * pointPerPip * pointSize;
-                    const lossKotor = roundedLot * currentSLPips * 10;
-                    const totalKomisi = roundedLot * komisiRate;
-                    const lossBersih = lossKotor + totalKomisi;
-                    netProfit = lossBersih * targetNetRR;
-                }
-                fibEntryDisplay.textContent = entryPrice.toFixed(5);
-                fibTPDisplay.textContent = tpPrice.toFixed(5);
-                fibNetProfitDisplay.textContent = fmt$(netProfit);
-            } else {
-                fibEntryDisplay.textContent = '—';
-                fibTPDisplay.textContent = '—';
-                fibLotDisplay.textContent = '—';
-                fibNetProfitDisplay.textContent = '—';
-                fibPreciseNote.textContent = '—';
-            }
-
-            // Hitung Seksi 2 dengan lot yang terpasang (bisa lot bulat atau manual)
+            // Ambil Lot yang terpasang di sistem untuk melakukan kalkulasi rill keuangan
             const lotUsed = safeFloat(lotSizeInput.value);
-            const isNoCom = accountTypeSelect.value === 'nocommission';
-            const komisiRate = isNoCom ? 0 : safeFloat(komisiRateInput.value);
-            const targetNetRR = isNoCom ? 0 : safeFloat(targetNetRRInput.value);
 
-            const lossKotor = lotUsed * currentSLPips * 10;
+            // 4. Hitung Keuangan Rill & Target Profit Berdasarkan Lot Terpasang
+            const lossKotor = lotUsed * currentSLPips * pipValuePerLot;
             const totalKomisi = lotUsed * komisiRate;
-            const lossBersih = isNoCom ? lossKotor : lossKotor + totalKomisi;
-            let profitBersih = 0, profitKotor = 0, rrVisual = 0;
+            const lossBersih = lossKotor + totalKomisi; // NET RISK REAL AKUN LU
+
+            let profitBersih = 0;
+            let profitKotor = 0;
+            let rrVisual = 0;
+            let tpPrice = 0;
 
             if (isNoCom) {
                 if (range > 0) {
                     const pointSize = safeFloat(pointSizeInput.value) || 0.01;
                     const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
                     const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
-                    const tpPrice = currentTradeSide === 'buy' ? low + range * FIB_TP_NOCOM : high - range * FIB_TP_NOCOM;
+                    tpPrice = currentTradeSide === 'buy' ? low + range * FIB_TP_NOCOM : high - range * FIB_TP_NOCOM;
+                    
                     const tpDistance = Math.abs(tpPrice - entryPrice);
                     const tpPips = (tpDistance / pointSize) / pointPerPip;
-                    profitKotor = lotUsed * tpPips * 10;
-                } else {
-                    profitKotor = 0;
+                    profitKotor = lotUsed * tpPips * pipValuePerLot;
                 }
                 profitBersih = profitKotor;
                 rrVisual = lossKotor > 0 ? profitKotor / lossKotor : 0;
             } else {
+                // Jika Menggunakan Komisi
                 if (lossKotor > 0 && targetNetRR > 0) {
-                    profitBersih = lossBersih * targetNetRR;
-                    profitKotor = profitBersih + totalKomisi;
-                    rrVisual = profitKotor / lossKotor;
+                    profitBersih = lossBersih * targetNetRR; // Profit bersih dicari sesuai target RRR
+                    profitKotor = profitBersih + totalKomisi; // Profit kotor yang harus dikejar di chart
+                    rrVisual = profitKotor / lossKotor; // RR Visual chart yang wajib dipasang
+                    
+                    if (range > 0) {
+                        const pointSize = safeFloat(pointSizeInput.value) || 0.01;
+                        const pointPerPip = safeFloat(pointPerPipInput.value) || 10;
+                        const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
+                        const tpPips = currentSLPips * rrVisual;
+                        
+                        tpPrice = currentTradeSide === 'buy' ? 
+                            entryPrice + (tpPips * pointPerPip * pointSize) : 
+                            entryPrice - (tpPips * pointPerPip * pointSize);
+                    }
                 }
             }
 
+            // Tampilkan Data Keuangan Real ke UI
             lossKotorDisplay.textContent = fmt$(lossKotor);
             totalKomisiDisplay.textContent = fmt$(totalKomisi);
             totalKomisiDisplay.style.color = totalKomisi === 0 ? 'var(--text-muted)' : '#d2991d';
@@ -458,18 +438,28 @@
             profitBersihDisplay.textContent = fmt$(profitBersih);
             profitKotorDisplay.textContent = fmt$(profitKotor);
             rrVisualFinalDisplay.textContent = (lossKotor > 0 && rrVisual > 0) ? fmtRR(rrVisual) : '1 : —';
+
+            // Update Tampilan Data Fibonacci Section 3
+            if (range > 0) {
+                const entryPrice = currentTradeSide === 'buy' ? high - range * FIB_ENTRY : low + range * FIB_ENTRY;
+                fibEntryDisplay.textContent = entryPrice.toFixed(5);
+                fibTPDisplay.textContent = tpPrice.toFixed(5);
+                fibNetProfitDisplay.textContent = fmt$(profitBersih);
+            } else {
+                fibEntryDisplay.textContent = '—';
+                fibTPDisplay.textContent = '—';
+                fibLotDisplay.textContent = '—';
+                fibNetProfitDisplay.textContent = '—';
+                fibPreciseNote.textContent = '—';
+            }
         }
 
-        // Event listeners
+        // Event Listeners Murni Mekanis
         pairSelect.addEventListener('change', applyPairDefaults);
         accountTypeSelect.addEventListener('change', updateAccountTypeUI);
-        pointSizeInput.addEventListener('input', calculateAll);
-        pointPerPipInput.addEventListener('input', calculateAll);
         slPipsInput.addEventListener('input', function() {
-            if (!isUpdatingFromFib) {
-                manualSLPipsEdit = true;
-                updateSLSyncBadge();
-            }
+            manualSLPipsEdit = true;
+            updateSLSyncBadge();
             calculateAll();
         });
         slSyncBadge.addEventListener('click', function() {
@@ -497,25 +487,16 @@
         balanceInput.addEventListener('input', calculateAll);
         riskPercentInput.addEventListener('input', calculateAll);
         lotSizeInput.addEventListener('input', function() {
-            if (!isUpdatingFromFib) {
-                manualLotEdit = true;
-                updateLotSyncBadge();
-            }
+            manualLotEdit = true;
+            updateLotSyncBadge();
             calculateAll();
         });
-        komisiRateInput.addEventListener('input', function() {
-            if (accountTypeSelect.value === 'nocommission') komisiRateInput.value = '0';
-            calculateAll();
-        });
+        komisiRateInput.addEventListener('input', calculateAll);
         targetNetRRInput.addEventListener('input', calculateAll);
         fibHighInput.addEventListener('input', calculateAll);
         fibLowInput.addEventListener('input', calculateAll);
 
         function initialize() {
-            manualLotEdit = false;
-            manualSLPipsEdit = false;
-            updateLotSyncBadge();
-            updateSLSyncBadge();
             applyPairDefaults();
             updateAccountTypeUI();
         }
